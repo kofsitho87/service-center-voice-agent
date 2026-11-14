@@ -1,0 +1,16 @@
+{
+  "_comment": "Synthetic, fictional business for the demo. Not a real company, address, or phone number.",
+  "site_id": "demo-device-care",
+  "client_id": 9001,
+  "business_name": "Example Device Care (가상 데모 서비스센터)",
+  "timezone": "Asia/Seoul",
+  "slot_minutes": 30,
+  "booking_horizon_days": 14,
+  "hours": {
+    "weekdays": [0, 1, 2, 3, 4],
+    "open": "09:00",
+    "close": "18:00",
+    "last_start": "17:30"
+  },
+  "closed_dates": []
+}

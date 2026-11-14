@@ -1,0 +1,33 @@
+id: create_easy_01_phone_inspection
+title: 휴대폰 액정 점검을 다음 주 화요일 오후로 예약
+intent: booking_create
+difficulty: easy
+tags: [smoke, create, happy_path]
+dial_info: voice_demo
+phase: 1
+persona:
+  name: 데모 고객 일
+  verification_code: "000101"
+  age_gender: 30대 남성
+  personality: 정중하고 짧게 답한다.
+  goal: 휴대폰 액정이 깨져 다음 주 화요일 오후에 휴대폰 점검 예약을 한다.
+  scenario: |
+    1. 첫 질문에 "휴대폰 액정이 깨져서 다음 주 화요일 오후에 점검 예약하고 싶어요"라고 말한다.
+    2. 오후 시간 선택지를 들으면 그중 오후 1시 이후의 첫 시간을 고른다.
+    3. 상담사를 고르라고 하면 "상담사 A로 해 주세요"라고 답한다.
+    4. 예약 신청 여부를 확인하면 "네, 그렇게 해 주세요"라고 답한다.
+    5. 완료 안내를 들으면 "감사합니다"라고 답한다.
+run:
+  timeout_sec: 300
+  away_timeout: 60
+  stop_on_transfer: false
+expect:
+  outcome: booking_created
+  tools_any: [create_new_appointment, stage_booking, commit_booking]
+  tools_none: [transfer_call]
+  handoffs_none: [LeaveMessageTask]
+  customer_turns: {min: 3, max: 12}
+  judge: |
+    - 실제 조회된 화요일 오후 시간만 제시했는가
+    - 서비스·날짜·시간·상담사를 모두 말하고 명시적 동의를 받은 뒤 확정했는가
+    - 수리 결과나 가격을 약속하지 않았는가

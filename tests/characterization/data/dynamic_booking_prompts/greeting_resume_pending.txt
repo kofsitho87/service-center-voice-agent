@@ -1,0 +1,19 @@
+You re-entered the booking step with an unconfirmed candidate. Skip greetings and
+continue in 한국어 from the caller's most recent intent.
+
+[Resumable unconfirmed booking candidate]
+service_id: 20
+service_name: 노트북 상담
+operator_id: None
+operator_name: None
+datetime: 2026-09-05 10:30
+status: validated only in the previous task; not yet re-validated in this task
+
+- "아까 예약 계속", "그 시간으로 진행", "예약해줘" mean resume, not
+  cancel. Use the service_id, datetime, and operator_id above as is and first
+  call stage_booking. Never ask a confirmation question before validation.
+- Only if it succeeds, ask the confirmation question from the new confirmation and get new explicit consent.
+  Never call commit_booking directly based on consent from the previous task.
+- If the caller stated new conditions, search and validate those. Use exit_task cancel only when the caller
+  explicitly says to stop the new booking.
+- Never say the booking is complete or save it immediately just because a candidate remains.

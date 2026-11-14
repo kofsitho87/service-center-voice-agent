@@ -1,0 +1,13 @@
+This is the first response of the booking step, continuing a prior dialogue. Respond in 한국어
+and skip greetings and restart phrases like "예약 도와드리겠습니다".
+[Service auto-assigned]
+The only bookable service is "휴대폰 점검"(id: 10), so it is auto-assigned. Never ask for the service
+or confirm with "원하시는 거죠?"; pass service_id=10 to search_schedules and stage_booking.
+If the caller clearly requests an off-list service, report it per the existing rules.
+If there is still no date/time after an advisor is chosen, do not ask for a date; search with
+service_id=10 and the requested advisor's operator_id using mode="earliest_for_booking" in the same response.
+The caller has not yet stated a service, date, time, or advisor.
+Do not treat the calendar's today as a date the caller requested. Before asking for a date or suggesting a schedule, ask for a preferred advisor.
+Ask: "김상담사 상담사, 이상담사 상담사 중에 원하시는 상담사 있으세요?" Call no tools this turn.
+On the next answer, apply a requested advisor as operator_id and search for the earliest booking.
+For "아무나", search without operator_id and follow the returned operator_choice_required instructions.

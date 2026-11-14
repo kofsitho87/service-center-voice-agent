@@ -1,0 +1,31 @@
+id: create_medium_02_faq_interrupts_confirmation
+title: 확인 질문 중 운영시간 문의가 끼어든 뒤 예약
+intent: booking_create
+difficulty: medium
+tags: [create, faq_interruption, fresh_consent]
+dial_info: voice_demo
+phase: 1
+persona:
+  name: 데모 고객 일
+  verification_code: "000101"
+  age_gender: 30대 여성
+  personality: 궁금한 게 많다.
+  goal: 노트북 키보드 고장으로 다음 주 수요일 오전 노트북 상담 예약.
+  scenario: |
+    1. 첫 질문에 "노트북 키보드가 고장 나서 다음 주 수요일 오전에 상담 예약하고 싶어요"라고 말한다.
+    2. 오전 시간 중 가장 이른 시간을 고른다.
+    3. 처음 예약 신청 확인 질문을 받으면 답하지 말고 "그런데 주말에도 운영하세요?"라고 묻는다.
+    4. 답을 들은 뒤 "네, 아까 그 시간으로 진행해 주세요"라고 말한다.
+    5. 이후 확인 질문에는 "네"라고 답한다.
+run:
+  timeout_sec: 300
+  away_timeout: 60
+  stop_on_transfer: false
+expect:
+  outcome: booking_created
+  tools_any: [commit_booking]
+  tools_none: [transfer_call]
+  customer_turns: {min: 4, max: 14}
+  judge: |
+    - 운영시간 질문에 센터 자료(평일 운영, 주말 휴무)대로 답했는가
+    - 끼어든 질문 이후 예약 내용을 다시 제시하고 새 동의를 받은 뒤 확정했는가

@@ -1,0 +1,32 @@
+id: create_medium_01_refuse_then_other_time
+title: 처음 제안을 거절하고 다른 시간으로 예약
+intent: booking_create
+difficulty: medium
+tags: [create, rejection, correction]
+dial_info: voice_demo
+phase: 1
+persona:
+  name: 데모 고객 일
+  verification_code: "000101"
+  age_gender: 40대 여성
+  personality: 조건을 바꿔 가며 신중하게 고른다.
+  goal: 소형기기(스마트워치) 점검을 원하는데 처음 제안된 시간은 거절하고 목요일 오후로 예약한다.
+  scenario: |
+    1. 첫 질문에 "스마트워치 점검 예약하려고요"라고 말한다.
+    2. 처음 제안되는 시간은 무조건 "그 시간은 안 돼요. 목요일 오후는요?"라고 거절한다.
+    3. 목요일 오후 시간이 제시되면 가장 이른 시간을 고른다.
+    4. 확인 질문에는 "네, 그걸로 해 주세요"라고 답한다.
+run:
+  timeout_sec: 300
+  away_timeout: 60
+  stop_on_transfer: false
+expect:
+  outcome: booking_created
+  tools_any: [reject_candidate, commit_booking]
+  tools_none: [transfer_call]
+  handoffs_none: [LeaveMessageTask]
+  customer_turns: {min: 3, max: 14}
+  judge: |
+    - 거절된 시간을 다시 제안하지 않았는가
+    - 바뀐 조건(목요일 오후)으로 다시 조회한 시간만 제시했는가
+    - 최종 시간에 대해 새로 명시적 동의를 받은 뒤 확정했는가

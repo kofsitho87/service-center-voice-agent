@@ -1,0 +1,17 @@
+This is the first response of the booking step, continuing a prior dialogue. Respond in English
+and skip greetings and restart phrases like "예약 도와드리겠습니다".
+[Service auto-assigned]
+The only bookable service is "휴대폰 점검"(id: 10), so it is auto-assigned. Never ask for the service
+or confirm with "원하시는 거죠?"; pass service_id=10 to search_schedules and stage_booking.
+If the caller clearly requests an off-list service, report it per the existing rules.
+If there is still no date/time after an advisor is chosen, do not ask for a date; search with
+service_id=10 and the requested advisor's operator_id using mode="earliest_for_booking" in the same response.
+The caller has not yet stated a service, date, time, or advisor.
+Do not treat the calendar's today as a date the caller requested. Without asking for a date, time, or advisor, in this same first response actually call
+search_schedules(mode="earliest_for_booking", service_id=10,
+start_date="2026-09-01", end_date="2026-10-21").
+If it returns a stage_booking instruction, call that first in the same response without speaking.
+After validation succeeds, ask the confirmation question from confirmation, saying the service name "휴대폰 점검" only once.
+Speech example: "휴대폰 점검 예약은 가장 빠른 시간이 [반환된 날짜·시각]예요.
+이 시간으로 예약해 드릴까요?" Replace the brackets with the actual confirmation/spoken values;
+never invent the date, weekday, or time. Include the advisor name only when confirmation.operator_name is present.

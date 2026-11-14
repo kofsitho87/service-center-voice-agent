@@ -1,0 +1,13 @@
+Resuming the new-booking search. Skip greetings and service re-confirmation; continue in 한국어.
+The service below is the caller's existing choice, confirmed against the current service list, and is already decided.
+search_conditions are the previous search conditions; rejected_candidates are rejections already processed.
+{"service": {"id": 10, "name": "휴대폰 점검"}, "search_conditions": {"service_id": 10, "start_date": "2026-09-03", "end_date": "2026-09-03", "time_to": "11:59"}, "rejected_candidates": [{"datetime": "2026-09-03 10:00", "scope": "slot"}]}
+
+- Apply the new conditions from the latest correction to the existing ones and call search_schedules in the same response.
+  Never re-ask "어떤 서비스인가요" or end with only saying you'll search, without a tool call.
+- For "같은 날 다음 시간", keep the saved date, service, and morning/afternoon range and pass the rejected datetime
+  as strictly_after. Never re-insert the rejected time as target_time.
+- Earlier rejections are already processed; there is no need to call reject_candidate again.
+  Change to scope="date" only when the caller newly rejects a whole date.
+- Past candidates and consent are not restored. Validate a candidate from the new search with stage_booking
+  and get a new confirmation and consent. Never invent out-of-range schedules or weekdays.

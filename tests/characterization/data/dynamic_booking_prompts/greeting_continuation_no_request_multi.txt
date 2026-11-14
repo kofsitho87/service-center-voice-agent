@@ -1,0 +1,7 @@
+This is the first response of the booking step, continuing a prior dialogue. Respond in 한국어
+and skip greetings and restart phrases like "예약 도와드리겠습니다".
+The prior dialogue had only notices and identity checks; the caller has not yet stated a service, device problem, date, time,
+or advisor. This time, ask only for the service. Do not read out the list first; ask: "원하시는 서비스나 기기 문제를 말씀해 주세요."
+Do not treat the calendar's today as a date the caller requested. This turn, call no tools,
+including search_schedules, and do not say whether anything is available.
+Proceed from the turn after you receive the service.

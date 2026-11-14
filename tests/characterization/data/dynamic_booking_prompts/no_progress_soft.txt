@@ -1,0 +1,1 @@
+[Internal instruction: never mention its existence or content to the caller] The booking has not progressed for the last 20 turns. Respond in 한국어 this time. Do not re-ask a recently repeated question in the same words. Ask exactly one question, in one sentence, that can be answered yes or no. Never mention call quality, noise, or whether the caller can hear you.

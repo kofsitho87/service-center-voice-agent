@@ -1,0 +1,27 @@
+# 고객 시뮬레이션 회귀 스위트 설정 (가상 데모 서비스센터).
+# 실행: uv run tools/sim-suite.py --list
+defaults:
+  agent_model: "openai:gpt-5.6-luna"
+  judge_model: "openai:gpt-5.4-mini"
+  concurrency: 3
+  timeout_sec: 360
+  away_timeout: 90
+  stop_on_transfer: false
+  # 모든 시나리오에 자동으로 합쳐지는 전역 금지 패턴(TTS 회귀 방지).
+  # 마크다운 볼드, ISO 날짜, 24시간 시:분 표기는 음성으로 읽히면 안 된다.
+  agent_regex_none:
+    - "\\*\\*"
+    - "\\d{4}-\\d{2}-\\d{2}"
+    - "\\d{2}:\\d{2}"
+
+fixtures:
+  # Synthetic Example Device Care configuration (no real business data).
+  voice_demo: simulations/dial_info/voice_demo.yaml
+
+scenario_dirs:
+  - simulations/scenarios
+
+phases:
+  1: "create / info / handoff"
+  2: "modify / inquiry"
+  3: "cancel"

@@ -1,0 +1,72 @@
+# Sim-suite fixture (copy of src/dial_info/dial_info.voice.ko.yaml). Synthetic demo configuration (Example Device Care, fictional).
+# Phone values use the unassigned 010-0000-xxxx block as obvious placeholders.
+call_config_data:
+  language: ko-KR
+  llm_model: openai:gpt-5.6-luna
+  # Live voice: ElevenLabs STT + Cartesia TTS with a public Korean voice.
+  stt_model: elevenlabs:scribe_v2_realtime
+  tts_model: cartesia:sonic-3
+  voice: 1a602be4-3b57-4bef-a270-dfa5efed0541  # Cartesia public voice "Yeji - Clarity Desk" (ko)
+  tts_speed: 1.0
+  transfer_to: null
+  sip_outbound_trunk_id: null
+  transfer_message: 직원 연결을 시도하겠습니다. (데모에서는 실제 연결되지 않습니다)
+  transfer_mode: leave_memo
+
+business_data:
+  site_id: demo-device-care
+  client_id: 9001
+  client_name: Example Device Care
+  client_phone: null
+  client_address: null
+  is_work_time: true
+
+recipient_data:
+  phone: "01000000001"
+  caller_phone: "01000000001"
+  user_name: 데모 고객 일
+  verification_code: "2000-01-01"
+  customer_no: DC-1001
+  customer_visit: REVISIT
+
+flow_config:
+  entry_node_id: greeting
+  nodes:
+    - id: greeting
+      type: greeting
+      name: 인사말
+      input_method: voice
+      message: 안녕하세요, 가상 데모 서비스센터 Example Device Care의 AI 상담원입니다. 무엇을 도와드릴까요?
+
+agents_config:
+  booking_agent:
+    booking_create: auto
+    booking_modify: auto
+    booking_cancel: auto
+    booking_inquiry: auto
+  info_agent:
+    introduction: auto
+    visit_guide: auto
+    advisor_guide: auto
+    service_guide: auto
+    certificate: auto
+    events: auto
+
+workflow_config:
+  booking:
+    schedule_lookup_days: 14
+    booking_create:
+      select_operator: true
+      service_selection:
+        display_mode: parent_with_child
+        free_utterance: true
+      verify_single_customer_identity: false
+    booking_modify:
+      allow_same_day_reservation: false
+    booking_cancel:
+      allow_same_day_reservation: false
+  leave_message:
+    booking_contact_collection: desired_datetime_and_message
+
+queued: false
+queue_wait_seconds: 10

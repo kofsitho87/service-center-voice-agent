@@ -1,0 +1,32 @@
+id: cancel_easy_01_confirm
+title: 기존 휴대폰 점검 예약을 확인 후 취소
+intent: booking_cancel
+difficulty: easy
+tags: [smoke, cancel, happy_path]
+dial_info: voice_demo
+phase: 3
+allow_blocked: true
+persona:
+  name: 데모 고객 일
+  verification_code: "000101"
+  age_gender: 30대 남성
+  personality: 짧게 답한다.
+  goal: 잡혀 있는 휴대폰 점검 예약 한 건을 취소한다.
+  scenario: |
+    1. 첫 질문에 "예약 취소하려고요"라고 말한다.
+    2. 예약이 여러 건이면 가장 이른 휴대폰 점검 예약을 고른다.
+    3. 취소 확인 질문에는 "네, 취소해 주세요"라고 답한다.
+run:
+  timeout_sec: 300
+  away_timeout: 60
+  stop_on_transfer: false
+expect:
+  outcome: booking_cancelled
+  tools_any: [cancel_appointment]
+  tools_none: [commit_booking, transfer_call]
+  handoffs_any: [SelectReservationTask]
+  customer_turns: {min: 2, max: 10}
+  judge: |
+    - 실제 조회된 예약만 읽어 주었는가
+    - 취소 전에 대상 예약의 날짜·시간을 확인받았는가
+    - 다른 예약을 건드리지 않았는가

@@ -1,0 +1,43 @@
+{
+  "_comment": "Synthetic customers. Phone values use the unassigned 010-0000-xxxx block as obvious placeholders. 'verification_code' holds the synthetic 6-digit demo verification code in the booking API's date shape: DC-1001 enters 000101, DC-1002 enters 000202. Never a real verification code. Appointment dates are relative to the seed date.",
+  "customers": [
+    {
+      "customer_no": "DC-1001",
+      "phone": "01000000001",
+      "name": "데모 고객 일",
+      "verification_code": "2000-01-01",
+      "appointments": [
+        {
+          "reservation_record_id": "DC-R-SEED-1",
+          "service_id": 301,
+          "operator_id": 401,
+          "business_days_ahead": 3,
+          "time": "10:00",
+          "memo": "seed"
+        }
+      ]
+    },
+    {
+      "customer_no": "DC-1002",
+      "phone": "01000000002",
+      "name": "데모 고객 이",
+      "verification_code": "2000-02-02",
+      "appointments": [
+        {
+          "reservation_record_id": "DC-R-SEED-2",
+          "service_id": 302,
+          "operator_id": 401,
+          "business_days_ahead": 2,
+          "time": "14:00"
+        },
+        {
+          "reservation_record_id": "DC-R-SEED-3",
+          "service_id": 303,
+          "operator_id": 402,
+          "business_days_ahead": 4,
+          "time": "15:30"
+        }
+      ]
+    }
+  ]
+}

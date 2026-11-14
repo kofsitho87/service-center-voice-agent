@@ -1,0 +1,34 @@
+# Environment and credentials (never commit)
+.env
+.env.*
+!.env.example
+.release-denylist
+*_service_account.json
+*service-account*.json
+llm-agent-*.json
+*.pem
+*.key
+
+# Generated local data
+artifacts/
+logs/
+transcripts/
+*.sqlite
+*.sqlite3
+*.db
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

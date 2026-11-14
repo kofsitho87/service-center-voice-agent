@@ -1,0 +1,62 @@
+[project]
+name = "service-center-voice-agent"
+version = "0.1.0"
+description = "Fictional service-center voice agent adapted from an inbound voice-agent architecture (demo)"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "grpcio>=1.83.0,<2.0.0",
+    "httpx>=0.27.0",
+    "langchain>=1.0.7",
+    "langchain-anthropic>=1.1.0",
+    "langchain-openai>=1.0.3",
+    "langfuse>=4.0.0",
+    "livekit-agents[aws,cartesia,elevenlabs,google,openai,silero,fishaudio]==1.8.6",
+    "livekit-api==1.2.1",
+    "livekit-protocol==1.1.27",
+    "loguru>=0.7.3",
+    "numpy>=1.26",
+    "python-dotenv>=1.2.1",
+    "pyyaml>=6.0",
+    "redis>=5.0",
+    # Demo: in-process Redis for the retained warm-transfer queue (no server).
+    "fakeredis>=2.26",
+    "websockets>=15.0.1,<16",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-httpx>=0.30",
+    "pytest>=9.0.2",
+    "ruff>=0.12.11",
+    "pytest-asyncio>=1.3.0",
+    "rich>=14.3.3",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[project.scripts]
+analyze-latency = "utils.latency:main"
+
+[tool.pytest.ini_options]
+# tests/ 는 src/ 를 최상위 패키지로 import 한다(예: `from tasks... import`).
+# tools/ 는 sim_suite / customer_actor 등 시뮬레이터 모듈 import 용이다.
+pythonpath = ["src", "tools", "conversation_analysis"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "A", "C4", "UP", "SIM", "RUF"]
+ignore = ["E501", "E402", "UP006", "B904"]  # Line too long (handled by formatter), module level import not at top of file
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

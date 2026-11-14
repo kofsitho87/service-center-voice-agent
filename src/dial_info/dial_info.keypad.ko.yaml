@@ -1,0 +1,112 @@
+# Synthetic DTMF menu configuration (Example Device Care, fictional).
+call_config_data:
+  language: ko-KR
+  llm_model: openai:gpt-5.6-luna
+  stt_model: google:chirp_3
+  tts_model: google:chirp_3
+  voice: ko-KR-Chirp3-HD-Kore
+  tts_speed: 1.0
+  transfer_to: null
+  sip_outbound_trunk_id: null
+  transfer_mode: leave_memo
+
+business_data:
+  site_id: demo-device-care
+  client_id: 9001
+  client_name: Example Device Care
+  client_phone: null
+  client_address: null
+  is_work_time: true
+
+recipient_data:
+  phone: "01000000002"
+  caller_phone: "01000000002"
+  customer_visit: REVISIT
+
+flow_config:
+  entry_node_id: greeting_menu
+  nodes:
+    - id: greeting_menu
+      type: greeting
+      name: 인사말 (키패드 메뉴)
+      input_method: dtmf
+      message: 안녕하세요, 가상 데모 서비스센터입니다. 점검 예약은 1번, 예약 조회는 2번, 예약 취소는 3번, 예약 변경은 4번, 운영 시간 안내는 5번, 방문 준비물 문자 안내는 6번, 직원 연결은 7번, 다시 들으시려면 별표를 눌러주세요.
+      replay_message: 점검 예약은 1번, 예약 조회는 2번, 예약 취소는 3번, 예약 변경은 4번, 운영 시간 안내는 5번, 방문 준비물 문자 안내는 6번, 직원 연결은 7번을 눌러주세요.
+      dtmf_options:
+        "1":
+          next: booking_agent
+          user_request: 점검 예약
+          tool: booking_create
+        "2":
+          next: booking_agent
+          user_request: 예약 조회
+          tool: booking_inquiry
+        "3":
+          next: booking_agent
+          user_request: 예약 취소
+          tool: booking_cancel
+        "4":
+          next: booking_agent
+          user_request: 예약 변경
+          tool: booking_modify
+        "5":
+          next: info_agent
+          user_request: 운영 시간 안내
+        "6":
+          next: info_agent
+          user_request: 방문 준비물 안내
+          on_select_message: 방문하실 때 기기와 충전기를 함께 가져와 주세요. 같은 내용을 문자로도 보내드릴게요. (데모에서는 실제로 발송되지 않습니다)
+          end_call: true
+          sms:
+            subject: "방문 준비물 안내"
+            content: |
+              [가상 데모] {client_name} 방문 준비물
+              - 점검할 기기와 충전기
+              - 방문 전 데이터 백업 권장
+        "7":
+          next: transfer_call
+        "*":
+          next: greeting_menu
+      next: greeting_menu
+
+    - id: transfer_call
+      type: action
+      name: 직원 연결
+      action_type: transfer
+
+    - id: end_call
+      type: exit
+      name: 통화 종료
+      message: 이용해 주셔서 감사합니다. 좋은 하루 되세요.
+
+agents_config:
+  booking_agent:
+    booking_create: auto
+    booking_modify: auto
+    booking_cancel: auto
+    booking_inquiry: auto
+  info_agent:
+    introduction: auto
+    visit_guide: auto
+    advisor_guide: auto
+    service_guide: auto
+    certificate: auto
+    events: auto
+
+workflow_config:
+  booking:
+    booking_create:
+      select_operator: false
+      service_selection:
+        display_mode: parent_with_child
+        free_utterance: true
+      verify_single_customer_identity: true
+    booking_modify:
+      allow_same_day_reservation: false
+    booking_cancel:
+      allow_same_day_reservation: true
+  leave_message:
+    booking_contact_collection: desired_datetime_and_message
+
+queued: false
+queue_wait_seconds: 10

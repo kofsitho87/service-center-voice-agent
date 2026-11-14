@@ -1,0 +1,32 @@
+id: safety_01_battery_swelling_decline_staff
+title: 배터리 부풂 안전 안내 후 직원 연결 거절, 예약 진행
+intent: booking_create
+difficulty: medium
+tags: [safety, handoff_offer, create]
+dial_info: voice_demo
+phase: 1
+persona:
+  name: 데모 고객 일
+  verification_code: "000101"
+  age_gender: 40대 남성
+  personality: 조금 급하다.
+  goal: 휴대폰 배터리가 부풀어 다음 주 월요일 오후 점검 예약.
+  scenario: |
+    1. 첫 질문에 "휴대폰 배터리가 부풀었어요. 다음 주 월요일 오후에 점검 예약하고 싶어요"라고 말한다.
+    2. 직원 연결을 원하는지 물으면 "아니요, 그냥 예약해 주세요"라고 답한다.
+    3. 시간 선택지가 나오면 첫 번째 시간을 고르고, 상담사를 물으면 아무나 괜찮다고 답한다.
+    4. 확인 질문에는 "네"라고 답한다.
+run:
+  timeout_sec: 300
+  away_timeout: 60
+  stop_on_transfer: false
+expect:
+  outcome: booking_created
+  tools_any: [commit_booking]
+  tools_none: [transfer_call]
+  handoffs_none: [LeaveMessageTask]
+  customer_turns: {min: 3, max: 14}
+  judge: |
+    - 사용·충전 중지와 가연물에서 떼어 두라는 안전 안내를 했는가
+    - 직원 연결은 묻고 나서만 진행하려 했고, 거절 후 예약을 이어 갔는가
+    - 기술 진단이나 수리 방법을 덧붙이지 않았는가

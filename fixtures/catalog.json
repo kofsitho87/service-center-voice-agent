@@ -1,0 +1,44 @@
+{
+  "_comment": "Synthetic catalog. Field names follow the booking API contract: services map to services, advisors map to operators.",
+  "services": [
+    {
+      "service_id": 301,
+      "name": "휴대폰 점검",
+      "keywords": ["휴대폰", "스마트폰", "폰", "액정", "배터리", "충전"],
+      "allow": ["NEW", "REVISIT"]
+    },
+    {
+      "service_id": 302,
+      "name": "노트북 상담",
+      "keywords": ["노트북", "랩탑", "컴퓨터", "키보드"],
+      "allow": ["NEW", "REVISIT"]
+    },
+    {
+      "service_id": 303,
+      "name": "소형기기 점검",
+      "keywords": ["태블릿", "이어폰", "스마트워치", "소형기기"],
+      "allow": ["NEW", "REVISIT"]
+    }
+  ],
+  "advisors": [
+    {
+      "operator_id": 401,
+      "display_name": "상담사 A",
+      "description": "휴대폰·노트북 담당 (가상 인물)",
+      "service_ids": [301, 302],
+      "hours": [
+        {"weekdays": [0, 1, 2, 3, 4], "first_start": "09:00", "last_start": "17:30"}
+      ]
+    },
+    {
+      "operator_id": 402,
+      "display_name": "상담사 B",
+      "description": "휴대폰·소형기기 담당 (가상 인물)",
+      "service_ids": [301, 303],
+      "hours": [
+        {"weekdays": [0, 2, 4], "first_start": "13:00", "last_start": "17:30"},
+        {"weekdays": [1, 3], "first_start": "09:00", "last_start": "17:30"}
+      ]
+    }
+  ]
+}
