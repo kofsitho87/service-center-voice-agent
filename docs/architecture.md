@@ -18,8 +18,6 @@ flowchart TD
     TASKS --> GATEWAY[fake_transfer_gateway: simulated SIP]
     TASKS --> QUEUE[(warm-transfer queue on fakeredis)]
     SESSION -->|call end| EVENTS[[artifacts/events/*.jsonl]]
-    EVENTS --> ANALYSIS[conversation_analysis consumer]
-    ANALYSIS --> ADB[(artifacts/analysis.sqlite3)]
 ```
 
 ## Call flow
@@ -52,7 +50,7 @@ create_new_appointment
   │    ACCEPTED → success line and hang-up
   │    CONFLICT → "just taken", re-enter create_new_appointment
   │    NOT_FOUND / ERROR → say not completed; booking-exit router
-  └─ call end → event log → local consumer
+  └─ call end → event log
 ```
 
 Modify and cancel follow this path: lookup, then `SelectReservationTask`,
@@ -81,4 +79,4 @@ then (for modify) `OperatorScheduleSelectionTask`, then the reservation write, t
 - `fixtures/customers.json`: 2 synthetic customers on the unassigned
   `010-0000-xxxx` block, with relative-date appointments.
 - `artifacts/` (gitignored): `demo.sqlite3`, `outbox/*.jsonl` (simulated SMS,
-  trunk, and telephony), `events/*.jsonl`, `analysis.sqlite3`.
+  trunk, and telephony), `events/*.jsonl`.

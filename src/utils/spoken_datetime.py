@@ -54,7 +54,7 @@ def spoken_datetime(raw: str, language: str | None = None) -> str:
 
 
 def spoken_date_or_datetime(text: str, language: str | None = None) -> str:
-    """Lenient variant for RECORD reservation dates.
+    """Lenient variant for service-center reservation dates.
 
     Accepts 'YYYY-MM-DD HH:MM:SS' or 'YYYY-MM-DD'; anything else is returned
     unchanged.

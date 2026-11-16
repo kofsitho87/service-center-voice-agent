@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 
 from external_apis import booking_api
-from external_apis.types.request_types import GetConfirmedAppointmentsRequest
+from external_apis.types.request_types import GetConfirmedReservationsRequest
 from tools.reservation_submit import submit_current_reservation
 
 from .harness import (
@@ -33,8 +33,8 @@ def _ctx(info: dict, **recipient):
 
 
 async def _my_appointments(phone: str) -> list[str]:
-    response = await booking_api.get_confirmed_appointments(
-        GetConfirmedAppointmentsRequest(site_id=SITE, phone=phone)
+    response = await booking_api.get_confirmed_reservations(
+        GetConfirmedReservationsRequest(site_id=SITE, phone=phone)
     )
     return [item.reservationRecordId for item in response.data]
 

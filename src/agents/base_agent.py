@@ -529,15 +529,7 @@ class BaseAgent(KoreanSpeechGuardMixin, Agent):
                 failure_message="Error waiting for playout",
             )
 
-        # 전환 시작을 대화 이력에도 남긴다.
-        #
-        # 위 logger.bind 는 stdout 으로만 나가고 통화 후 분석은 history 만 본다.
-        # 그래서 cold 는 SUCCESS 이벤트에서만 시도가 열렸고, REFER 자체가 실패한
-        # 통화는 시도조차 만들어지지 않아 분모에 들어오지 못했다. 분자와 분모가
-        # 같은 집합이 되어 cold 완수율이 99.9% 로 나오던 원인이다.
-        #
-        # 방출 시점은 warm(_handle_warm_transfer_call)과 맞춘다. 계열마다
-        # STARTED 의 뜻이 달라지면 두 지표를 나란히 놓을 수 없다.
+        # 전환 시작을 대화 이력에도 남긴다. warm 전환과 같은 시점에 기록한다.
         self.session.history.add_message(
             role="developer",
             content=(

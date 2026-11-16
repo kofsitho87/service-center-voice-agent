@@ -13,6 +13,13 @@
 하나의 클라이언트 생성 함수를 거치고, 그 아래의 가짜 백엔드 transport가
 `*.fake.invalid` 호스트만 처리하고 나머지는 차단합니다.
 
+고객·예약 조회 API는 다음 경로를 사용합니다.
+
+| 용도 | 경로 | 조회 옵션 |
+| --- | --- | --- |
+| 고객 조회 | `GET /customers/{site_id}` | `phoneNumber` |
+| 확정 예약 조회 | `GET /reservation/{site_id}/confirmed` | `phoneNumber`, 선택 사항인 `customerNumber`·`verificationCode` |
+
 ```mermaid
 flowchart TD
     subgraph ENTRY["엔트리포인트"]
@@ -67,8 +74,6 @@ flowchart TD
     K3 --> Q[("대기열<br/>fakeredis")]
 
     SESSION -- "통화 종료" --> EV[["events/*.jsonl"]]
-    EV --> ANALYSIS["conversation_analysis<br/>통화 결과 집계"]
-    ANALYSIS --> ADB[("analysis.sqlite3")]
 ```
 
 ### 통화 흐름
@@ -168,7 +173,7 @@ sequenceDiagram
   턴 감지를 쓰고, DTMF 키패드 메뉴와 상담원 연결 대기열을 지원합니다. 전화
   연결 자체는 시뮬레이션입니다.
 - **검증 근거:** 오프라인 테스트가 약 1800개입니다(S01–S21 시나리오 포함).
-  LLM이 고객을 연기하는 라이브 테스트 세트와 통화 후 로컬 분석 단계도 있습니다.
+  LLM이 고객을 연기하는 라이브 테스트 세트도 있습니다.
 
 ## 요구 사항
 
@@ -198,8 +203,7 @@ cp .env.example .env   # 필요한 키만 채워 넣으세요
 | 라이브 텍스트 (고객 시뮬레이터) | `uv run python tools/customer-sim.py` (페르소나를 묻습니다) |
 | 라이브 회귀 테스트 세트 | `uv run python tools/sim-suite.py` (시나리오 5개, LLM 채점) |
 | 라이브 음성 (마이크) | `uv run python src/agent-cli.py console` |
-| 통화 후 분석 | `uv run python conversation_analysis/main.py --show` |
-| 린트 | `uv run ruff check src tools tests conversation_analysis` (보고 39건. 대부분 API 필드의 `mixedCase` 이름입니다) |
+| 린트 | `uv run ruff check src tools tests` (보고 39건. 대부분 API 필드의 `mixedCase` 이름입니다) |
 
 5분짜리 시연 순서는 `docs/demo-script.md`에 있습니다.
 
@@ -223,7 +227,6 @@ src/                    에이전트 런타임 (엔트리포인트, 에이전트
 src/fake_backend/       프로세스 내 가짜 서비스 + SQLite 저장소 + 장애 주입
 src/dial_info/          가상 통화 설정
 fixtures/               가상 업체·서비스 목록·고객·안내 자료
-conversation_analysis/  통화 후 로컬 분석기
 tools/                  고객 시뮬레이터, 회귀 테스트 세트, 데모 도구
 simulations/            가상 시뮬레이션 시나리오
 tests/                  characterization/ (단위·특성 테스트), integration/, unit/, scenarios/ (S01–S21)

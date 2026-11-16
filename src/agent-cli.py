@@ -124,7 +124,7 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
 
         track_background_task(write_transcript(ctx.room.name, session.history))
         track_background_task(write_transcript_events(session._recorded_events))
-        # Publish the call-end event for the local post-call consumer.
+        # Write the call-end event to the local event log.
         track_background_task(publish_call_end_event(call_session_data, session))
 
     ctx.add_shutdown_callback(shutdown_callback)

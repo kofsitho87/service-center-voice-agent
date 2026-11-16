@@ -123,11 +123,11 @@ def operator_available_times(
     return _ok({"operatorId": operator_id, "availableTimes": times})
 
 
-def confirmed_appointments(request: httpx.Request, _m: re.Match[str]) -> httpx.Response:
+def confirmed_reservations(request: httpx.Request, _m: re.Match[str]) -> httpx.Response:
     if fault := _read_fault():
         return fault
     with store.connection() as conn:
-        rows = store.confirmed_appointments(
+        rows = store.confirmed_reservations(
             conn,
             request.url.params.get("phoneNumber", ""),
             customer_no=request.url.params.get("customerNumber"),
@@ -140,7 +140,7 @@ def customer_by_phone(request: httpx.Request, _m: re.Match[str]) -> httpx.Respon
     if fault := _read_fault():
         return fault
     with store.connection() as conn:
-        rows = store.customers_by_phone(conn, request.url.params.get("telNum", ""))
+        rows = store.customers_by_phone(conn, request.url.params.get("phoneNumber", ""))
     customers = [
         {
             "customerNo": row["customer_no"],
@@ -339,13 +339,13 @@ ROUTES: list[tuple[str, str, str, Handler]] = [
     (
         config.RESERVATION_HOST,
         "GET",
-        r"/record/(?P<site_id>[^/]+)/appointment/confirm",
-        confirmed_appointments,
+        r"/reservation/(?P<site_id>[^/]+)/confirmed",
+        confirmed_reservations,
     ),
     (
         config.RESERVATION_HOST,
         "GET",
-        r"/record/v2/(?P<site_id>[^/]+)/customer",
+        r"/customers/(?P<site_id>[^/]+)",
         customer_by_phone,
     ),
     (config.RESERVATION_HOST, "POST", r"/sms/send", sms_send),

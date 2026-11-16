@@ -1,6 +1,6 @@
 """Configuration for the in-process fake backend (demo-only).
 
-Every external business system (reservation/RECORD API, call-context API, SMS,
+Every external business system (reservation/customer API, call-context API, SMS,
 trunk allocation, SIP status webhook) is served by a fake that lives in this
 process. The HTTP clients are real; ``utils.http_client`` routes their requests
 to ``fake_backend.transport``.

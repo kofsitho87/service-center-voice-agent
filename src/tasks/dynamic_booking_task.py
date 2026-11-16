@@ -3101,12 +3101,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         service_id: int | None,
         operator_id: int | None,
     ) -> dict[str, Any]:
-        """일정 조회 결과를 통화 후 분석용 이벤트로 남기고 결과를 그대로 돌려준다.
-
-        `count=0` 이 `NO_AVAILABILITY / CENTER_OPS` 귀인의 직접 근거다.
-        이 이벤트가 없으면 예약 퍼널이 '서비스 선택 → 블랙박스 → 완료' 가 되어
-        어느 단계에서 깨졌는지 알 수 없다.
-        """
+        """일정 조회 결과를 대화 이력에 기록하고 그대로 반환한다."""
         presentation = result.get("presentation")
         total_available = (
             presentation.get("total_available")
@@ -3321,8 +3316,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
                 assigned=(operator_id is None),
                 **staged.__dict__,
             ).info("Booking staged")
-            # 서비스·상담사·일시가 한 번에 확정되는 지점. 통화 후 퍼널의
-            # STAGED 칸이며, 여기까지 왔다가 확정 못 한 이탈이 보이게 된다.
+            # 확인할 서비스·상담사·일시를 대화 이력에 기록한다.
             self.session.history.add_message(
                 role="developer",
                 content="",

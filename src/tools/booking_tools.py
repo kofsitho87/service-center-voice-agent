@@ -125,7 +125,7 @@ async def _finish_incomplete_reservation_lookup(
     event_name: str,
     result: GetMyReservationsResult,
 ) -> bool:
-    """Close a reservation lookup attempt that did not reach the RECORD response.
+    """Close a reservation lookup attempt that did not reach the reservation API response.
 
     Returning True tells the tool caller to stop. Only `completed` may continue
     into the empty/non-empty reservation handling.
@@ -303,7 +303,7 @@ async def _handoff_operator_missing(
     event_name: str,
     selected_reservation: dict[str, Any],
 ) -> None:
-    """Preserve RECORD-data evidence and hand the request to configured staff flow."""
+    """Preserve reservation-data evidence and hand the request to configured staff flow."""
     await _handoff_selected_reservation(
         ctx,
         action_key=action_key,

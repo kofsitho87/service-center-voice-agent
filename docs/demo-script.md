@@ -39,11 +39,6 @@ Run `uv run python tools/demo.py show`: a new `agent` row appears.
 1. Say "예약 취소하려고요." Pick the earliest appointment and confirm.
 2. Run `tools/demo.py show`: the row state is `CANCELLED` (kept for audit).
 
-## E. After the calls
-
-Run `uv run python conversation_analysis/main.py --show`. It prints one result
-per call: resolution, tools used, booking events, reservation ID, and duration.
-
 ## Offline proof (no credentials)
 
 ```bash

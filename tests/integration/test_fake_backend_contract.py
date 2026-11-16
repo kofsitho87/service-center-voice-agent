@@ -11,7 +11,7 @@ import pytest
 
 from external_apis import booking_api, context_api, sms_api
 from external_apis.types.request_types import (
-    GetConfirmedAppointmentsRequest,
+    GetConfirmedReservationsRequest,
     GetCustomerRequest,
 )
 from fake_backend import outbox
@@ -101,7 +101,7 @@ async def test_operator_times_parse_with_source_helper():
     assert schedules[0] == {"time": "2026-11-16 13:00:00", "advisor_id": 402}
 
 
-async def test_customer_lookup_and_owned_appointments():
+async def test_customer_lookup_and_owned_reservations():
     single = await booking_api.get_customer_by_phone(
         GetCustomerRequest(site_id=SITE, phone="01000000001")
     )
@@ -111,11 +111,42 @@ async def test_customer_lookup_and_owned_appointments():
     assert [p.customerNo for p in single.data.customers] == ["DC-1001"]
     assert unknown.success and unknown.data.customers == []
 
-    mine = await booking_api.get_confirmed_appointments(
-        GetConfirmedAppointmentsRequest(site_id=SITE, phone="01000000002")
+    mine = await booking_api.get_confirmed_reservations(
+        GetConfirmedReservationsRequest(site_id=SITE, phone="01000000002")
     )
     assert [a.reservationRecordId for a in mine.data] == ["DC-R-SEED-2", "DC-R-SEED-3"]
     assert mine.data[0].reservationDateTime == "2026-11-18 14:00:00"
+    assert mine.data[0].reservationDetail == "노트북 상담"
+
+
+@pytest.mark.parametrize(
+    ("filters", "expected_count"),
+    [
+        ({"customer_no": "DC-1002"}, 2),
+        ({"customer_no": "DC-1001"}, 0),
+        ({"verification_code": "000202"}, 2),
+        ({"verification_code": "000101"}, 0),
+        ({"customer_no": "DC-1002", "verification_code": "000202"}, 2),
+        ({"customer_no": "DC-1002", "verification_code": "000101"}, 0),
+    ],
+)
+async def test_confirmed_reservations_apply_identity_filters(filters, expected_count):
+    response = await booking_api.get_confirmed_reservations(
+        GetConfirmedReservationsRequest(site_id=SITE, phone="01000000002", **filters)
+    )
+    assert response.success
+    assert len(response.data) == expected_count
+    assert all(row.customerNumber == "DC-1002" for row in response.data)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [f"/record/{SITE}/appointment/confirm", f"/record/v2/{SITE}/customer"],
+)
+async def test_retired_customer_and_reservation_routes_are_not_served(path):
+    async with await create_async_http_client() as client:
+        response = await client.get(f"http://booking.fake.invalid{path}")
+    assert response.status_code == 404
 
 
 async def test_read_fault_maps_to_source_failure_shape(monkeypatch):

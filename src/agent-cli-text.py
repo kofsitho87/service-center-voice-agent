@@ -84,7 +84,7 @@ async def save_local_transcripts(
 
     await write_transcript(ctx.room.name, session.history)
     await write_transcript_events(session._recorded_events)
-    # Publish the call-end event for the local post-call consumer.
+    # Write the call-end event to the local event log.
     call_config = session.userdata.call_config_data
     call_config.call_end_time = call_config.call_end_time or kst_now_naive_iso()
     await publish_call_end_event(session.userdata, session)

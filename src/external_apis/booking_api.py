@@ -10,12 +10,12 @@ from utils.http_client import create_async_http_client
 
 from .api_logging import log_api_exception, log_api_response, response_elapsed_ms
 from .types.request_types import (
-    GetConfirmedAppointmentsRequest,
+    GetConfirmedReservationsRequest,
     GetCustomerRequest,
 )
 from .types.response_types import (
     AvailableSchedulesAPIResponse,
-    ConfirmedAppointmentsAPIResponse,
+    ConfirmedReservationsAPIResponse,
     CustomerAPIResponse,
     CustomerContents,
     OperatorAPIResponse,
@@ -374,20 +374,19 @@ async def get_available_schedules(
     )
 
 
-async def get_confirmed_appointments(
-    request: GetConfirmedAppointmentsRequest,
+async def get_confirmed_reservations(
+    request: GetConfirmedReservationsRequest,
     client_id: int | None = None,
-) -> ConfirmedAppointmentsAPIResponse:
+) -> ConfirmedReservationsAPIResponse:
     """
-    RECORD 예약 확정 예약을 조회합니다.
-    - customerNumber가 있으면 기존 고객 조회 (customerNumber + phoneNumber)
-    - customerNumber가 없으면 신규 고객 조회 (phoneNumber + verificationCode)
+    서비스센터 확정 예약을 조회합니다.
+    전화번호로 조회하고, 고객 번호와 확인번호가 있으면 함께 필터링합니다.
 
     Args:
-        request: GetConfirmedAppointmentsRequest containing site_id, phone, customer_no, verification_code
+        request: GetConfirmedReservationsRequest containing site_id, phone, customer_no, verification_code
 
     Returns:
-        RECORD 예약 확정 예약 API 응답
+        서비스센터 확정 예약 API 응답
     """
     params = {
         "phoneNumber": request.phone,
@@ -400,23 +399,23 @@ async def get_confirmed_appointments(
         params["verificationCode"] = request.verification_code
 
     return await _get_reservation_api(
-        "GET_CONFIRMED_APPOINTMENTS",
-        f"{_base_url()}/record/{request.site_id}/appointment/confirm",
-        ConfirmedAppointmentsAPIResponse,
+        "GET_CONFIRMED_RESERVATIONS",
+        f"{_base_url()}/reservation/{request.site_id}/confirmed",
+        ConfirmedReservationsAPIResponse,
         params=params,
         client_options={"timeout": 3.0},
-        build=lambda data, _response: ConfirmedAppointmentsAPIResponse(
+        build=lambda data, _response: ConfirmedReservationsAPIResponse(
             resultMsg=None,
             contents=data,
             success=True,
         ),
         # This endpoint never surfaces the server message.
         server_message=None,
-        http_error_message="RECORD 예약 확정 조회 중 오류가 발생했습니다.",
+        http_error_message="확정 예약 조회 중 오류가 발생했습니다.",
         timeout_message=(
-            "RECORD 예약 확정 조회 요청이 시간 초과되었습니다. 잠시 후 다시 시도해주세요."
+            "확정 예약 조회 요청이 시간 초과되었습니다. 잠시 후 다시 시도해주세요."
         ),
-        unexpected_message="RECORD 예약 확정 조회 중 예상치 못한 오류가 발생했습니다.",
+        unexpected_message="확정 예약 조회 중 예상치 못한 오류가 발생했습니다.",
     )
 
 
@@ -443,11 +442,10 @@ async def get_customer_by_phone(
     """
     return await _get_reservation_api(
         "GET_CUSTOMER_BY_PHONE",
-        f"{_base_url()}/record/v2/{request.site_id}/customer",
+        f"{_base_url()}/customers/{request.site_id}",
         CustomerAPIResponse,
         params={
-            "guardianFallback": "true",
-            "telNum": request.phone,
+            "phoneNumber": request.phone,
         },
         build=_build_customer_response,
         server_message=lambda data: _normalize_api_response(data).get("resultMsg"),

@@ -1,7 +1,6 @@
 """Golden tests pinning CallSessionData serialization.
 
-``to_safe_dict`` is the ``call_session_data`` payload published to Kafka and
-consumed by conversation_analysis; ``to_dict`` feeds the CALL_SESSION_DATA debug
+``to_safe_dict`` is the ``call_session_data`` payload written to the local event log; ``to_dict`` feeds the CALL_SESSION_DATA debug
 log. Both outputs, including their quirks, must stay stable.
 """
 

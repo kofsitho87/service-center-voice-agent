@@ -118,7 +118,7 @@ def _reservations_userdata(verification_code):
 def _patch_lookup(monkeypatch, *, verify=None, dtmf=None):
     monkeypatch.setattr(
         get_my_reservations_task,
-        "get_confirmed_appointments",
+        "get_confirmed_reservations",
         AsyncMock(return_value=SimpleNamespace(success=True, data=[], message=None)),
     )
     if verify is not None:
@@ -181,7 +181,7 @@ async def test_reservation_lookup_reports_new_customer_identity(monkeypatch):
 async def test_reservation_api_failure_keeps_identity_source(monkeypatch):
     monkeypatch.setattr(
         get_my_reservations_task,
-        "get_confirmed_appointments",
+        "get_confirmed_reservations",
         AsyncMock(return_value=SimpleNamespace(success=False, data=None, message="x")),
     )
 

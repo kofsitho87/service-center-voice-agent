@@ -94,7 +94,7 @@ class SingleAgent(BaseAgent):
         self._center_context = center_context
         instructions = self._build_instructions(call_session_data, center_context)
 
-        # 통화 후 분석용 INFO_LOOKUP 이벤트 판정에 쓸 센터 안내 문단.
+        # INFO_LOOKUP 이벤트 판정에 쓸 센터 안내 문단.
         # 프롬프트에 주입한 시점의 내용을 보관해야 통화 도중 원본이 수정되어도
         # 판정 기준이 흔들리지 않는다.
         self._center_context_chunks = self._split_center_context(center_context)

@@ -45,7 +45,7 @@ analyze-latency = "utils.latency:main"
 [tool.pytest.ini_options]
 # tests/ 는 src/ 를 최상위 패키지로 import 한다(예: `from tasks... import`).
 # tools/ 는 sim_suite / customer_actor 등 시뮬레이터 모듈 import 용이다.
-pythonpath = ["src", "tools", "conversation_analysis"]
+pythonpath = ["src", "tools"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 

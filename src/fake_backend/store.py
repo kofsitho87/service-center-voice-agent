@@ -408,7 +408,7 @@ def customers_by_phone(conn: sqlite3.Connection, phone: str) -> list[sqlite3.Row
     ).fetchall()
 
 
-def confirmed_appointments(
+def confirmed_reservations(
     conn: sqlite3.Connection,
     phone: str,
     *,
@@ -451,7 +451,7 @@ def confirmed_appointments(
                 "customerName": row["customer_name"],
                 "state": row["state"],
                 "memo": row["memo"],
-                "appointmentDetail": row["service_name"],
+                "reservationDetail": row["service_name"],
                 "reservationRecordId": row["reservation_record_id"],
             }
         )

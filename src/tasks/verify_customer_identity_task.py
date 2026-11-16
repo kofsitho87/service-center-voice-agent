@@ -15,7 +15,7 @@ from utils.i18n import t
 MAX_VERIFY_VERIFICATION_CODE_CONFIRMATION_ATTEMPTS = 3
 
 # `verification_code_not_provided` 는 대조 자체가 일어나지 않은 실패다. `no_match` 와
-# 묶으면 발신자 무입력이 RECORD 데이터 문제로 계상된다(분석 v2 owner 축).
+# 묶으면 발신자 무입력이 고객 조회 데이터 문제로 계상된다(분석 v2 owner 축).
 EscalationReason = Literal[
     "ambiguous_match", "no_match", "verify_failed", "verification_code_not_provided"
 ]

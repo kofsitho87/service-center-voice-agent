@@ -4,8 +4,7 @@ Exposes Kafka-compatible public functions (``send_kafka_message``/
 ``send_kafka_message_async``/``get_kafka_client``/``cleanup``) with a
 synchronous-send result contract (``True`` only after the record is durably
 written), and appends one JSON line per message to
-``artifacts/events/<topic>.jsonl`` instead of publishing to a broker. The local
-post-call consumer reads that file in place of a broker subscription.
+``artifacts/events/<topic>.jsonl`` instead of publishing to a broker.
 
 Environment:
     DEMO_EVENTS_DIR: output directory (default ``artifacts/events``)

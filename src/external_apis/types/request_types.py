@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class GetConfirmedAppointmentsRequest(BaseModel):
+class GetConfirmedReservationsRequest(BaseModel):
     site_id: str
     phone: str = Field(..., description="전화번호")
     customer_no: Optional[str] = Field(None, description="고객 번호")

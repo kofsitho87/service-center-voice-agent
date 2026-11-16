@@ -6,8 +6,8 @@ from loguru import logger
 from typing_extensions import Any
 
 from data import CallSessionData
-from external_apis.booking_api import get_confirmed_appointments
-from external_apis.types.request_types import GetConfirmedAppointmentsRequest
+from external_apis.booking_api import get_confirmed_reservations
+from external_apis.types.request_types import GetConfirmedReservationsRequest
 from tasks.dtmf_verification_code_task import GetVerificationCodeDtmfTask
 from tasks.verify_customer_identity_task import (
     EscalationReason,
@@ -184,7 +184,7 @@ class GetMyReservationsTask:
 
         # Step 3: Fetch reservations from API
         try:
-            request = GetConfirmedAppointmentsRequest(
+            request = GetConfirmedReservationsRequest(
                 site_id=site_id,
                 # phone=normalize_phone(phone),
                 phone=phone,
@@ -214,12 +214,12 @@ class GetMyReservationsTask:
         ).debug("Fetching reservations from API")
 
         try:
-            response = await get_confirmed_appointments(
+            response = await get_confirmed_reservations(
                 request, client_id=userdata.business_data.client_id
             )
             record_api_result(
                 self._history,
-                "GET_CONFIRMED_APPOINTMENTS",
+                "GET_CONFIRMED_RESERVATIONS",
                 response,
             )
 
@@ -263,7 +263,7 @@ class GetMyReservationsTask:
                     "appointment_date": item.reservationDateTime,
                     "service_name": item.serviceName,
                     "service_id": item.serviceId,
-                    "content": item.appointmentDetail,
+                    "content": item.reservationDetail,
                     "reservation_state": item.state,
                     "operator_id": item.operatorId,
                 }

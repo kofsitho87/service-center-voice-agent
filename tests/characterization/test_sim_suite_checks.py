@@ -540,14 +540,14 @@ def test_api_request_checks(tmp_path):
     parsed = parsed_from([customer("예약 변경"), END], tmp_path)
     expect = make_expect(
         outcomes=["no_outcome"],
-        api_requests_any=[r"GET /record/.+/appointment/confirm"],
+        api_requests_any=[r"GET /reservation/.+/confirmed"],
         api_requests_none=[r"schedules/available"],
     )
     results = run_checks(
         expect,
         parsed,
         "no_outcome",
-        api_requests=["GET /record/sim-fixture/appointment/confirm"],
+        api_requests=["GET /reservation/sim-fixture/confirmed"],
     )
     assert by_name(results, "api_requests_any")[0].passed is True
     assert by_name(results, "api_requests_none")[0].passed is True

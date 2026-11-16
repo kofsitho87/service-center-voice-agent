@@ -16,10 +16,7 @@ from utils.langfuse_tags import langfuse_tags
 # 액션 모드 타입
 ActionMode = Literal["auto", "transfer", "leave_memo"]
 
-# 라우팅 이벤트 계측. auto 가 아닌 모드는 툴 본문 대신 후속 태스크로 넘어가므로
-# 업무 시도를 '접수 후 인계' 로 명시적으로 닫는다. status 없이 mode 만 남기면
-# 분석기가 시도를 열어만 두고 닫지 못해 본인확인 이탈로 오분류한다.
-# mode 는 레거시 분류기(booking_create_incomplete)가 읽으므로 유지한다.
+# 툴 본문 대신 후속 태스크로 넘어가는 라우팅은 상태와 사유를 기록한다.
 ACTION_ROUTE_STATUS = "EXITED"
 ACTION_ROUTE_DETAILS: dict[str, dict[str, str]] = {
     "transfer": {"mode": "TRANSFER", "reason_code": "routed_transfer"},

@@ -1,7 +1,6 @@
 """Pin the CALL_TERMINATION developer events emitted by SingleAgent/BaseAgent.
 
-conversation_analysis (classifier.py, analytics/engagement.py) reads the
-actor/reason of these events, including the double emission on tool-driven
+These events preserve actor/reason, including the double emission on tool-driven
 hang-ups (the tool's own event followed by hangup()'s SYSTEM/HANGUP).
 """
 

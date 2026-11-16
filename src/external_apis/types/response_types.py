@@ -84,8 +84,8 @@ class SiteAvailableSchedulesContents(BaseModel):
 # Customer API Response Types
 
 
-class ConfirmedAppointmentItem(BaseModel):
-    """RECORD 예약 확정 예약 정보"""
+class ConfirmedReservationItem(BaseModel):
+    """서비스센터 확정 예약 정보"""
 
     reservationDateTime: str
     reservationEndDateTime: str | None = None
@@ -97,7 +97,7 @@ class ConfirmedAppointmentItem(BaseModel):
     customerName: str | None = None
     state: str
     memo: str | None = None
-    appointmentDetail: str | None = None
+    reservationDetail: str | None = None
     reservationRecordId: str | None = None
 
 
@@ -163,7 +163,7 @@ class SiteAvailableSchedulesAPIResponse(APIResponse[SiteAvailableSchedulesConten
 
 CustomerAPIResponse = APIResponse[CustomerContents]
 
-ConfirmedAppointmentsAPIResponse = APIResponse[List[ConfirmedAppointmentItem]]
+ConfirmedReservationsAPIResponse = APIResponse[List[ConfirmedReservationItem]]
 
 
 class OperatorAvailableTimesContents(BaseModel):

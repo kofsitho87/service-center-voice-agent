@@ -1,9 +1,7 @@
 """Call-end event payload shared by the local consoles.
 
 The local consoles publish the same payload shape as ``agent-server.py``
-through the local event log, so the post-call consumer
-(``conversation_analysis/``) also works for console calls. ``agent-server.py``
-publishes its payload inline.
+through the local event log. ``agent-server.py`` publishes its payload inline.
 """
 
 from __future__ import annotations

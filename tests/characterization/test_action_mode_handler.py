@@ -1,10 +1,7 @@
 """액션 모드 라우팅 이벤트 계측 — 상태와 사유를 명시한다.
 
-leave_memo / transfer 로 설정된 센터는 예약 툴 본문을 건너뛰고 후속 태스크로
-넘어간다. 이때 남기는 `BOOKING_CREATE` 이벤트에 status 가 없으면 분석기가
-예약 시도를 열어만 두고 닫지 못해 '본인확인 이탈' 로 오분류한다.
-런타임은 EXITED + reason_code 로 라우팅을 명시하고, mode 는 레거시 분류기의
-booking_create_incomplete 계산을 위해 유지한다.
+leave_memo / transfer 설정은 예약 툴 본문 대신 후속 태스크로 넘어간다.
+EXITED 상태와 라우팅 사유가 태스크 실행 전에 기록되는지 검증한다.
 """
 
 from types import SimpleNamespace
@@ -34,9 +31,7 @@ class _FakeAgent:
 
 
 def _ctx(mode: str, action_key: str = "booking_create"):
-    # 이벤트 기록과 handler 호출의 순서를 한 로그에 남긴다. 이벤트가 handler
-    # 뒤에 기록되면 후속 태스크의 이벤트보다 늦게 나와 분석기가 시도 경계를
-    # 잘못 자른다.
+    # 라우팅 이벤트가 handler 호출보다 먼저 기록되는지 확인한다.
     order: list[str] = []
     agent = _FakeAgent(order)
     history: list[dict] = []

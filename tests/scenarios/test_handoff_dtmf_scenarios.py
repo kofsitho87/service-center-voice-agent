@@ -2,7 +2,7 @@
 
 S13/S20 cover the queue and trunk-check boundaries plus the simulated
 telephony gateway. A connected staff leg is not simulated (it needs a second LiveKit
-participant); see docs/evaluation.md. S21 covers publication and the local consumer.
+participant); see docs/evaluation.md. S21 covers safe event publication.
 """
 
 from __future__ import annotations
@@ -123,23 +123,3 @@ async def test_s21_call_end_event_is_published_once_as_safe_json(demo_env):
     payload = json.loads(lines[0])["value"]["call_session_data"]
     assert payload["reservation_info"]["reservation_record_id"] == "DC-R-x"
     assert "flow_config" not in payload  # excluded by the safe serializer
-
-
-async def test_s21_local_consumer_processes_the_event_once(demo_env):
-    from call_analysis.consumer import consume
-    from call_analysis.repository import Repository
-
-    csd = session_data()
-    csd.reservation_info = {"type": "NEW_RESERVATION", "reservation_record_id": "DC-R-x"}
-    message = {"call_session_data": csd.to_safe_dict(), "conversation": {"items": []}}
-    for _ in range(2):  # at-least-once delivery may repeat the event
-        await send_kafka_message_async(
-            message=message, topic="service-center.call-analysis"
-        )
-
-    repo = Repository(demo_env / "analysis.sqlite3")
-    stats = consume(demo_env / "events" / "service-center.call-analysis.jsonl", repo)
-    results = repo.results()
-    repo.close()
-    assert (stats.saved, stats.skipped_duplicate) == (1, 1)
-    assert [r["room_name"] for r in results] == [csd.room_name]

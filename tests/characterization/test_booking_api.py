@@ -10,7 +10,7 @@ import pytest
 
 from external_apis import booking_api
 from external_apis.types.request_types import (
-    GetConfirmedAppointmentsRequest,
+    GetConfirmedReservationsRequest,
     GetCustomerRequest,
 )
 
@@ -61,7 +61,7 @@ def _check_available_schedules(result):
     ]
 
 
-def _check_confirmed_appointments(result):
+def _check_confirmed_reservations(result):
     assert result.message is None
     assert result.data[0].reservationRecordId == "R1"
 
@@ -215,25 +215,25 @@ CASES = [
         },
     ),
     ApiCase(
-        name="get_confirmed_appointments",
-        event="GET_CONFIRMED_APPOINTMENTS",
-        call=lambda: booking_api.get_confirmed_appointments(
-            GetConfirmedAppointmentsRequest(
+        name="get_confirmed_reservations",
+        event="GET_CONFIRMED_RESERVATIONS",
+        call=lambda: booking_api.get_confirmed_reservations(
+            GetConfirmedReservationsRequest(
                 site_id="S1", phone="01000000101", customer_no="C1", verification_code="123456"
             )
         ),
-        path="/record/S1/appointment/confirm",
+        path="/reservation/S1/confirmed",
         params={
             "phoneNumber": "01000000101",
             "customerNumber": "C1",
             "verificationCode": "123456",
         },
         payload=[_CONFIRMED_ITEM],
-        check=_check_confirmed_appointments,
-        http_error_message="RECORD 예약 확정 조회 중 오류가 발생했습니다.",
-        unexpected_message="RECORD 예약 확정 조회 중 예상치 못한 오류가 발생했습니다.",
+        check=_check_confirmed_reservations,
+        http_error_message="확정 예약 조회 중 오류가 발생했습니다.",
+        unexpected_message="확정 예약 조회 중 예상치 못한 오류가 발생했습니다.",
         timeout_message=(
-            "RECORD 예약 확정 조회 요청이 시간 초과되었습니다. 잠시 후 다시 시도해주세요."
+            "확정 예약 조회 요청이 시간 초과되었습니다. 잠시 후 다시 시도해주세요."
         ),
         uses_server_message=False,
         client_options={"timeout": 3.0},
@@ -244,8 +244,8 @@ CASES = [
         call=lambda: booking_api.get_customer_by_phone(
             GetCustomerRequest(site_id="S1", phone="01000000101")
         ),
-        path="/record/v2/S1/customer",
-        params={"guardianFallback": "true", "telNum": "01000000101"},
+        path="/customers/S1",
+        params={"phoneNumber": "01000000101"},
         payload={
             "resultMsg": "ok",
             "customers": [],
