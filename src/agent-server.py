@@ -18,7 +18,6 @@ from utils.entrypoint_bootstrap import (
     build_agents_data,
     configure_process_environment,
     kst_now_naive_iso,
-    load_supplement_prompt,
 )
 
 configure_process_environment(dotenv_override=False)
@@ -64,7 +63,6 @@ from utils.session_settings import (
     PRODUCTION_MAX_TOOL_STEPS,
     PRODUCTION_NON_KO_GOOGLE_VOICE,
     PRODUCTION_STT_CUSTOM_VOCABULARY,
-    PRODUCTION_USER_AWAY_TIMEOUT,
     load_production_vad,
     production_tts_text_transforms,
     production_turn_handling,
@@ -203,7 +201,6 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
         initialize_recording(ctx, call_session_data, egress_storage_type="s3")
     )
     call_session_data.lkapi_ref["recording_setup_task"] = recording_setup_task
-    background_tasks: set[asyncio.Task[None]] = set()
 
     langfuse_metadata: dict[str, AttributeValue] = {
         "session.id": ctx.room.name,
@@ -240,12 +237,6 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
 
         ctx.add_shutdown_callback(flush_langfuse_trace)
 
-    def track_background_task(coro):
-        task = asyncio.create_task(coro)
-        background_tasks.add(task)
-        task.add_done_callback(background_tasks.discard)
-
-    track_background_task(load_supplement_prompt(call_session_data))
 
     logger.bind(call_session_data=call_session_data.to_dict()).debug(
         "CALL_SESSION_DATA"
@@ -427,7 +418,6 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
             non_ko_google_voice=PRODUCTION_NON_KO_GOOGLE_VOICE,
         ),
         tts_text_transforms=production_tts_text_transforms(),
-        user_away_timeout=PRODUCTION_USER_AWAY_TIMEOUT,
         max_tool_steps=PRODUCTION_MAX_TOOL_STEPS,
     )
 

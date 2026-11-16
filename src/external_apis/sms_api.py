@@ -52,14 +52,14 @@ def normalize_phone_number(phone: str | None) -> str:
 def _is_sent(response: MessageSendResponse) -> bool:
     if response.send_status is not None:
         return response.send_status.strip().upper() == _SUCCESS_STATUS
-    # ALIGO-style result code: 1 is success, anything else is a failure.
+    # Gateway result code: 1 is success, anything else is a failure.
     return response.result_code == 1
 
 
 def _log_summary(data: Any, success: bool) -> dict[str, Any]:
     """Safe, success-normalized payload for the common API logger.
 
-    ``resultCode`` uses ALIGO semantics (1 = success), which the shared logger
+    ``resultCode`` uses gateway semantics (1 = success), which the shared logger
     would read as an HTTP-like code and mark as failed, so pass an explicit
     ``success`` flag and leave out the message ID and phone number.
     """

@@ -22,18 +22,17 @@ DIAL_INFO = {
         "client_id": "42",
         "client_name": "Example Device Care",
         "client_phone": "0212345678",
-        "client_address": "(12345) Seoul",
+        "client_address": "Seoul",
         "is_work_time": False,
     },
     "recipient_data": {
         "user_name": "Customer",
         "phone": "01000000000",
-        "verification_code": "1990-01-01",
+        "verification_code": "123456",
         "customer_no": "7",
-        "customer_visit": "REVISIT",
         "sip_identity": "sip_01000000000",
         "caller_phone": "01000000000",
-        "last_reservation": {"operator_id": 3, "operator_name": "Dr"},
+        "last_reservation": {"operator_id": 3, "operator_name": "Advisor A"},
     },
     "call_config_data": {
         "language": "ko-KR",
@@ -61,13 +60,13 @@ def _build_call_session_data() -> CallSessionData:
     data = CallSessionData.from_dial_info(ctx, json.loads(json.dumps(DIAL_INFO)))
     data.agents_data = AgentsData(user_request="req", dtmf_tool="booking_create")
     data.reservation_data = {"k": "v"}
-    data.update_new_reservation_info(service_name="Dent")
+    data.update_new_reservation_info(service_name="Phone Repair")
     data.lkapi_ref["instance"] = object()
     data.transfer_record = TransferRecord(
         type="warm_transfer", transfer_status="SUCCESS", total_wait_seconds=1.5
     )
     data.booking_memo_context = BookingMemoContext(
-        service_name="Dent", searched_ranges=["a"]
+        service_name="Phone Repair", searched_ranges=["a"]
     )
     data.dynamic_booking_resume = DynamicBookingResumeContext(paused=True)
     data.pending_api_results.append({"api": "X", "success": True})
@@ -106,15 +105,14 @@ EXPECTED_SAFE_DICT = {
     },
     "pending_api_results": [{"api": "X", "success": True}],
     "recipient_data": {
-        "verification_code": "1990-01-01",
+        "verification_code": "123456",
         "caller_phone": "01000000000",
         "customer_no": "7",
-        "customer_visit": "REVISIT",
         "last_reservation": {
             "service_id": None,
             "service_name": None,
             "operator_id": 3,
-            "operator_name": "Dr",
+            "operator_name": "Advisor A",
         },
         "phone": "01000000000",
         "sip_identity": "sip_01000000000",
@@ -122,7 +120,7 @@ EXPECTED_SAFE_DICT = {
     },
     "recording_filepath": None,
     "recording_started_at": 1.25,
-    "reservation_info": {"service_name": "Dent", "type": "NEW_RESERVATION"},
+    "reservation_info": {"service_name": "Phone Repair", "type": "NEW_RESERVATION"},
     "room_name": "room-1",
     "transfer_record": {
         "action_type": None,
@@ -184,15 +182,14 @@ EXPECTED_DEBUG_DICT = {
         ],
     },
     "recipient_data": {
-        "verification_code": "1990-01-01",
+        "verification_code": "123456",
         "caller_phone": "01000000000",
         "customer_no": "7",
-        "customer_visit": "REVISIT",
         "last_reservation": {
             "service_id": None,
             "service_name": None,
             "operator_id": 3,
-            "operator_name": "Dr",
+            "operator_name": "Advisor A",
         },
         "phone": "01000000000",
         "sip_identity": "sip_01000000000",
@@ -201,7 +198,7 @@ EXPECTED_DEBUG_DICT = {
     "recording_filepath": None,
     "recording_started_at": 1.25,
     "reservation_data": {"k": "v"},
-    "reservation_info": {"service_name": "Dent", "type": "NEW_RESERVATION"},
+    "reservation_info": {"service_name": "Phone Repair", "type": "NEW_RESERVATION"},
     "room_name": "room-1",
     "transfer_record": {
         "action_type": None,
@@ -214,7 +211,6 @@ EXPECTED_DEBUG_DICT = {
     },
     "workflow_config": {
         "booking": {
-            "booking_cancel": {"allow_same_day_reservation": True},
             "booking_create": {
                 "service_selection": {
                     "display_mode": "parent_with_child",
@@ -223,7 +219,6 @@ EXPECTED_DEBUG_DICT = {
                 "select_operator": False,
                 "verify_single_customer_identity": False,
             },
-            "booking_modify": {"allow_same_day_reservation": True},
             "schedule_lookup_days": 30,
         },
         "leave_message": {

@@ -33,10 +33,6 @@ DEFAULT_MESSAGE_LANGUAGE = "ko-KR"
 LANGUAGE_DISPLAY_NAMES = {
     "ko-KR": "한국어",
     "en-US": "English",
-    "zh-CN": "中文",
-    "ja-JP": "日本語",
-    "es-ES": "Español",
-    "vi-VN": "Tiếng Việt",
 }
 
 
@@ -57,18 +53,6 @@ WEEKDAY_NAMES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
         "Friday",
         "Saturday",
         "Sunday",
-    ),
-    "zh-CN": ("星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"),
-    "ja-JP": ("月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日"),
-    "es-ES": ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"),
-    "vi-VN": (
-        "Thứ Hai",
-        "Thứ Ba",
-        "Thứ Tư",
-        "Thứ Năm",
-        "Thứ Sáu",
-        "Thứ Bảy",
-        "Chủ Nhật",
     ),
 }
 
@@ -160,10 +144,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "ko-KR": "AI 인바운드 전화입니다.",
         "en-US": "This is an inbound AI call.",
     },
-    "warm_transfer.briefing.new_customer": {
-        "ko-KR": "신규 고객님께 걸려온 전화입니다.",
-        "en-US": "This is a call regarding a new customer.",
-    },
     "warm_transfer.briefing.revisit_customer": {
         "ko-KR": "기존 고객 {name} 고객님께 걸려온 전화입니다.",
         "en-US": "This is a call regarding returning customer {name}.",
@@ -187,11 +167,6 @@ MESSAGES: dict[str, dict[str, str]] = {
     "end_call.goodbye": {
         "ko-KR": "통화를 종료하겠습니다. 좋은 하루 보내세요.",
         "en-US": "We'll end the call now. Have a great day.",
-    },
-    # --- utils/session_event_handlers.py ---
-    "session.response_delay_exit": {
-        "ko-KR": "응답지연으로 인해 통화를 종료합니다.",
-        "en-US": "We'll end the call now as we didn't receive a response.",
     },
     # --- tasks/greeting_dtmf_task.py ---
     "greeting_dtmf.replay.invalid": {
@@ -718,7 +693,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en-US": "I'll stop the current appointment task here. Is there anything else I can help with?",
     },
     # Stop with nothing chosen yet: invite the next step so the caller is not left
-    # in silence until the presence prompt (sim create_hard_02).
+    # in silence.
     "booking.exit.cancelled_ack_ask_more": {
         "ko-KR": "네, 예약은 진행하지 않을게요. 다른 도움이 필요하신가요?",
         "en-US": "All right, I won't make a booking. Is there anything else I can help with?",
@@ -728,14 +703,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en-US": "{base} ({detail})",
     },
     # --- tools/booking_tools.py ---
-    "booking.same_day_modify_not_allowed": {
-        "ko-KR": "당일 예약 변경은 현재 제가 직접 처리해드릴 수 없어 상담원에게 요청 내용을 남겨드리겠습니다. 통화를 종료하겠습니다. 좋은 하루 되세요.",
-        "en-US": "Same-day appointment changes can't be handled directly here, so I'll leave your request with an agent. I'll end the call now. Have a great day.",
-    },
-    "booking.same_day_cancel_not_allowed": {
-        "ko-KR": "당일 예약 취소는 현재 제가 직접 처리해드릴 수 없어 상담원에게 요청 내용을 남겨드리겠습니다. 통화를 종료하겠습니다. 좋은 하루 되세요.",
-        "en-US": "Same-day appointment cancellations can't be handled directly here, so I'll leave your request with an agent. I'll end the call now. Have a great day.",
-    },
     "booking.error.verification_code_rejected": {
         "ko-KR": "데모 확인번호 확인이 거부되었습니다.",
         "en-US": "Demo verification code check was rejected.",
@@ -882,30 +849,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "ko-KR": "예약 조회 요청",
         "en-US": "appointment inquiry",
     },
-    "leave_message.request_label.introduction": {
-        "ko-KR": "센터 소개 문의",
-        "en-US": "service center introduction inquiry",
-    },
-    "leave_message.request_label.visit_guide": {
-        "ko-KR": "방문 안내 문의",
-        "en-US": "visit guidance inquiry",
-    },
-    "leave_message.request_label.advisor_guide": {
-        "ko-KR": "상담사 안내 문의",
-        "en-US": "advisor inquiry",
-    },
-    "leave_message.request_label.service_guide": {
-        "ko-KR": "서비스 항목 문의",
-        "en-US": "services inquiry",
-    },
-    "leave_message.request_label.certificate": {
-        "ko-KR": "점검 확인서 발급 문의",
-        "en-US": "inspection report inquiry",
-    },
-    "leave_message.request_label.events": {
-        "ko-KR": "이벤트 문의",
-        "en-US": "event inquiry",
-    },
     "leave_message.progress_notice.default": {
         "ko-KR": "지금은 상담원 연결이 어려운 상황이에요. 상담원에게 전달하고 싶은 요청이나 메시지를 말씀해 주세요.",
         "en-US": "Please tell me the request or message you'd like to pass on to an agent.",
@@ -927,30 +870,6 @@ MESSAGES: dict[str, dict[str, str]] = {
     "leave_message.progress_notice.booking_inquiry": {
         "ko-KR": "예약 조회는 상담원 확인을 통해 진행됩니다. 예약 조회 요청을 상담원에게 전달해 드리겠습니다. 추가로 상담원에게 전달하고 싶은 내용이 있을까요?",
         "en-US": "Appointment inquiries are handled after an agent reviews them. I'll pass your inquiry on to an agent. Is there anything else you'd like to add for the agent?",
-    },
-    "leave_message.progress_notice.introduction": {
-        "ko-KR": "센터 소개는 상담원 확인을 통해 안내드립니다. 센터 소개 요청을 상담원에게 전달해 드리겠습니다. 추가로 상담원에게 전달하고 싶은 내용이 있을까요?",
-        "en-US": "Service center information is provided after an agent reviews it. I'll pass your request on to an agent. Is there anything else you'd like to add for the agent?",
-    },
-    "leave_message.progress_notice.visit_guide": {
-        "ko-KR": "방문 안내는 상담원 확인을 통해 안내드립니다. 방문 안내 요청을 상담원에게 전달해 드리겠습니다. 추가로 상담원에게 전달하고 싶은 내용이 있을까요?",
-        "en-US": "Visit guidance is provided after an agent reviews it. I'll pass your request on to an agent. Is there anything else you'd like to add for the agent?",
-    },
-    "leave_message.progress_notice.advisor_guide": {
-        "ko-KR": "상담사 안내는 상담원 확인을 통해 안내드립니다. 상담사 안내 요청을 상담원에게 전달해 드리겠습니다. 추가로 상담원에게 전달하고 싶은 내용이 있을까요?",
-        "en-US": "Advisor information is provided after an agent reviews it. I'll pass your request on to an agent. Is there anything else you'd like to add for the agent?",
-    },
-    "leave_message.progress_notice.service_guide": {
-        "ko-KR": "서비스 항목 안내는 상담원 확인을 통해 안내드립니다. 서비스 항목 안내 요청을 상담원에게 전달해 드리겠습니다. 추가로 상담원에게 전달하고 싶은 내용이 있을까요?",
-        "en-US": "Service information is provided after an agent reviews it. I'll pass your request on to an agent. Is there anything else you'd like to add for the agent?",
-    },
-    "leave_message.progress_notice.certificate": {
-        "ko-KR": "점검 확인서 발급은 상담원 확인을 통해 진행됩니다. 점검 확인서 발급 요청을 상담원에게 전달해 드리겠습니다. 추가로 상담원에게 전달하고 싶은 내용이 있을까요?",
-        "en-US": "Inspection report requests are handled after an agent reviews them. I'll pass your request on to an agent. Is there anything else you'd like to add for the agent?",
-    },
-    "leave_message.progress_notice.events": {
-        "ko-KR": "이벤트 안내는 상담원 확인을 통해 안내드립니다. 이벤트 안내 요청을 상담원에게 전달해 드리겠습니다. 추가로 상담원에게 전달하고 싶은 내용이 있을까요?",
-        "en-US": "Event information is provided after an agent reviews it. I'll pass your request on to an agent. Is there anything else you'd like to add for the agent?",
     },
     "leave_message.invalid_datetime_format": {
         "ko-KR": "희망 일시는 MM-DD HH:MM 형식으로 정리한 뒤 다시 확인해 주세요.",

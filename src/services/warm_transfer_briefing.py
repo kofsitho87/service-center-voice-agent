@@ -34,15 +34,12 @@ def build_warm_transfer_briefing_text(
     conversation_summary: str,
     *,
     customer_name: str | None,
-    is_new_customer: bool,
     language_code: str | None,
 ) -> str:
     """Combine customer context, conversation summary, and DTMF guidance."""
     parts = [t("warm_transfer.briefing.intro", language_code)]
 
-    if is_new_customer:
-        parts.append(t("warm_transfer.briefing.new_customer", language_code))
-    elif customer_name:
+    if customer_name:
         parts.append(
             t(
                 "warm_transfer.briefing.revisit_customer",
@@ -63,7 +60,6 @@ async def generate_warm_transfer_briefing_text(
     *,
     conversation_history: str,
     customer_name: str | None,
-    is_new_customer: bool,
     language_code: str | None,
     extra_instructions: str = "",
 ) -> str:
@@ -76,6 +72,5 @@ async def generate_warm_transfer_briefing_text(
     return build_warm_transfer_briefing_text(
         conversation_summary,
         customer_name=customer_name,
-        is_new_customer=is_new_customer,
         language_code=language_code,
     )

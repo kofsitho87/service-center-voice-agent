@@ -62,10 +62,6 @@ PRECONDITION_INTENTS = ("booking_modify", "booking_cancel")
 # 실행 중 세션 진행 상황을 확인하는 주기.
 POLL_INTERVAL_SEC = 5.0
 
-# away-timeout 으로 에이전트가 통화를 끊은 마무리 멘트. 텍스트 모드에서
-# "말만 하고 도구를 호출하지 않는" 간헐적 스톨의 최종 증상이다.
-AWAY_TIMEOUT_CLOSING = "응답지연으로 인해 통화를 종료합니다"
-
 # 재시도로 판정이 뒤집혔을 때 flaky 로 볼 (이전, 이후) 판정 집합.
 FLAKY_BEFORE = (VERDICT_ERROR, VERDICT_FAIL)
 FLAKY_AFTER = (VERDICT_PASS, VERDICT_JUDGE_FAIL, VERDICT_BLOCKED)
@@ -225,7 +221,6 @@ def _spawn_customer_sim(
     persona_path: Path,
     dial_info_path: Path,
     sim_root: Path,
-    away_timeout: int,
     stop_on_transfer: bool,
     customer_model: str | None,
     run_timeout: int,
@@ -234,7 +229,7 @@ def _spawn_customer_sim(
     reservation_api_base_url: str | None = None,
 ) -> tuple[bool, bool, int | None, float]:
     """customer-sim 을 돌리고 (timed_out, stopped_early, exit_code, elapsed) 반환."""
-    env = {**os.environ, "USER_AWAY_TIMEOUT": str(away_timeout)}
+    env = dict(os.environ)
     # DIAL_INFO_FILE 이 남아 있으면 DIAL_INFO_JSON 보다 우선한다
     # (src/utils/common.py::resolve_dial_info_path). 반드시 제거한다.
     env.pop("DIAL_INFO_FILE", None)
@@ -256,10 +251,8 @@ def _spawn_customer_sim(
         str(dial_info_path),
         "--sim-root",
         str(sim_root),
-        "--away-timeout",
-        str(away_timeout),
         # 항상 원본 에이전트 출력을 남긴다. 에이전트가 한 마디 하고 침묵한 채
-        # away-timeout 까지 가는 런은 agent_raw.log 없이는 진단할 수 없다.
+        # 타임아웃까지 가는 런은 agent_raw.log 없이는 진단할 수 없다.
         "--raw-log",
     ]
     if stop_on_transfer:
@@ -357,12 +350,9 @@ def compute_layer_statuses(
         quality_status = QUALITY_PASS
 
     expected_outcome = outcome in scenario.expect.outcomes and outcome != "no_outcome"
-    away_timeout_seen = any(
-        AWAY_TIMEOUT_CLOSING in message for message in parsed.agent_msgs
-    )
     if not parsed.has_events:
         harness_status = HARNESS_ERROR
-    elif timed_out or away_timeout_seen:
+    elif timed_out:
         harness_status = (
             HARNESS_STALL_AFTER_OUTCOME if expected_outcome else HARNESS_ERROR
         )
@@ -567,7 +557,6 @@ def run_scenario(
             persona_path=persona_path,
             dial_info_path=dial_info_path,
             sim_root=sim_root,
-            away_timeout=scenario.run.away_timeout,
             stop_on_transfer=scenario.run.stop_on_transfer,
             customer_model=customer_model,
             run_timeout=timeout,
@@ -663,15 +652,11 @@ def should_retry(result: RunResult) -> bool:
 
     텍스트 모드에서 에이전트가 안내만 하고 도구를 호출하지 않는 스톨은
     브랜치·모델과 무관하게 간헐적으로 재현된다(같은 시나리오가 몇 분 뒤
-    깨끗하게 통과). 그래서 아래 세 신호는 실패로 확정하기 전에 한 번 더 돌린다.
+    깨끗하게 통과). 그래서 아래 두 신호는 실패로 확정하기 전에 한 번 더 돌린다.
     """
     if result.verdict == VERDICT_ERROR:
         return True
-    if result.outcome == "no_outcome":
-        return True
-    return bool(
-        result.last_agent_msgs and AWAY_TIMEOUT_CLOSING in result.last_agent_msgs[-1]
-    )
+    return result.outcome == "no_outcome"
 
 
 def is_flaky(first_verdict: str, last_verdict: str) -> bool:

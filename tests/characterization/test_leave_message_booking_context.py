@@ -53,8 +53,8 @@ def _ctx():
 @pytest.mark.parametrize("language", ["ko-KR", "en-US"])
 def test_booking_context_renders_and_opening_uses_condition(monkeypatch, language):
     context = BookingMemoContext(
-        service_name="Checkup",
-        operator_name="Provider",
+        service_name="Inspection",
+        operator_name="Advisor",
         time_condition="weekday evenings at 19:30",
         searched_ranges=["2026-09-14~2026-09-20"],
     )
@@ -268,8 +268,8 @@ def test_missing_entry_reason_falls_back_to_failure_flag(monkeypatch):
 @pytest.mark.parametrize("language", ["ko-KR", "en-US"])
 def test_modify_context_without_condition_uses_modify_opener(monkeypatch, language):
     context = BookingMemoContext(
-        service_name="Checkup",
-        detail="Provider information missing",
+        service_name="Inspection",
+        detail="Advisor information missing",
         exit_reason_code="reservation_operator_missing",
     )
     task = _task(monkeypatch, context, action_key="booking_modify", language=language)
@@ -306,8 +306,8 @@ def test_context_opening_survives_missing_names(
 @pytest.mark.asyncio
 async def test_confirmed_condition_submits_without_datetime(monkeypatch):
     context = BookingMemoContext(
-        service_name="Checkup",
-        operator_name="Provider",
+        service_name="Inspection",
+        operator_name="Advisor",
         time_condition="평일 저녁 7시 30분",
         searched_ranges=["2026-09-14~2026-09-20"],
     )
@@ -518,7 +518,7 @@ async def test_message_only_still_collects_caller_message(monkeypatch, language)
 @pytest.mark.parametrize("language", ["ko-KR", "en-US"])
 @pytest.mark.asyncio
 async def test_datetime_confirmation_is_spoken_by_tool_not_llm(monkeypatch, language):
-    """Call 199292: the post-tool LLM reply came back empty and the call went silent.
+    """An empty post-tool LLM reply would leave the call silent.
 
     The confirmation must be spoken by the tool itself; returning None keeps
     LiveKit from requesting a follow-up LLM reply that could be empty.

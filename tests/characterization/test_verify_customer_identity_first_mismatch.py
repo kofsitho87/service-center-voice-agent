@@ -29,8 +29,8 @@ def _task(
     )
     task = VerifyCustomerIdentityTask(userdata, action="inquiry")
     customers = [
-        _customer("1", "1991-03-01"),
-        _customer("2", "1985-07-15"),
+        _customer("1", "314159"),
+        _customer("2", "271828"),
     ]
 
     async def _lookup(_phone):
@@ -49,7 +49,7 @@ def _task(
 
 
 async def test_first_confirmed_mismatch_escalates_without_second_collection():
-    task, collection_calls = _task(["2000-01-01", "1991-03-01"])
+    task, collection_calls = _task(["111111", "314159"])
 
     result = await task.run()
 
@@ -59,7 +59,7 @@ async def test_first_confirmed_mismatch_escalates_without_second_collection():
 
 
 async def test_collection_failure_still_gets_second_chance_to_match():
-    task, collection_calls = _task([None, "1991-03-01"])
+    task, collection_calls = _task([None, "314159"])
 
     result = await task.run()
 
@@ -78,17 +78,17 @@ async def test_two_collection_failures_remain_verification_code_not_provided():
     assert len(collection_calls) == 2
 
 
-async def test_ambiguous_verification_code_selects_first_match_without_chart_number():
-    task, collection_calls = _task(["1991-03-01"])
+async def test_ambiguous_verification_code_selects_first_match_without_customer_number():
+    task, collection_calls = _task(["314159"])
     first_match = _customer(
         "1",
-        "1991-03-01",
+        "314159",
         name="First Customer",
         phone="01000000102",
     )
     second_match = _customer(
         "2",
-        "1991-03-01",
+        "314159",
         name="Second Customer",
         phone="01000000103",
     )
@@ -106,13 +106,13 @@ async def test_ambiguous_verification_code_selects_first_match_without_chart_num
     assert result.escalation_reason is None
     assert len(collection_calls) == 1
     assert task._userdata.recipient_data.phone == "01000000102"
-    assert task._userdata.recipient_data.verification_code == "1991-03-01"
+    assert task._userdata.recipient_data.verification_code == "314159"
     assert task._userdata.recipient_data.user_name == "First Customer"
     assert task._userdata.recipient_data.customer_no is None
 
 
-async def test_unique_verification_code_match_keeps_chart_number():
-    task, _ = _task(["1991-03-01"])
+async def test_unique_verification_code_match_keeps_customer_number():
+    task, _ = _task(["314159"])
     task._userdata.recipient_data.customer_no = "stale-customer-no"
 
     result = await task.run()

@@ -4,20 +4,17 @@
     {
       "service_id": 301,
       "name": "휴대폰 점검",
-      "keywords": ["휴대폰", "스마트폰", "폰", "액정", "배터리", "충전"],
-      "allow": ["NEW", "REVISIT"]
+      "keywords": ["휴대폰", "스마트폰", "폰", "액정", "배터리", "충전"]
     },
     {
       "service_id": 302,
       "name": "노트북 상담",
-      "keywords": ["노트북", "랩탑", "컴퓨터", "키보드"],
-      "allow": ["NEW", "REVISIT"]
+      "keywords": ["노트북", "랩탑", "컴퓨터", "키보드"]
     },
     {
       "service_id": 303,
       "name": "소형기기 점검",
-      "keywords": ["태블릿", "이어폰", "스마트워치", "소형기기"],
-      "allow": ["NEW", "REVISIT"]
+      "keywords": ["태블릿", "이어폰", "스마트워치", "소형기기"]
     }
   ],
   "advisors": [

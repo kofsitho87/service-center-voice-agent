@@ -22,10 +22,7 @@ from services import fake_transfer_gateway
 from services.redis_client import _build_in_process_client
 from services.trunk_allocation_client import TrunkAllocationClient, TrunkStatus
 from services.warm_transfer_queue import CallDirection, WarmTransferQueue
-from tasks.dtmf_verification_code_task import (
-    _is_valid_verification_code,
-    _parse_verification_code,
-)
+from tasks.dtmf_verification_code_task import _is_valid_verification_code
 from utils.common import normalize_verification_code
 
 from .harness import session_data
@@ -73,7 +70,7 @@ async def test_s18_keypad_menu_routes_with_a_synthetic_demo_code():
     }
 
     # The caller's phone resolves to one synthetic customer; the 6-digit demo
-    # code (not a verification code) is validated and matched by the verification logic.
+    # verification code is validated and matched by the verification logic.
     lookup = await booking_api.get_customer_by_phone(
         GetCustomerRequest(
             site_id=csd.business_data.site_id, phone=csd.recipient_data.phone
@@ -81,8 +78,8 @@ async def test_s18_keypad_menu_routes_with_a_synthetic_demo_code():
     )
     [customer] = lookup.data.customers
     assert _is_valid_verification_code("000202")
-    assert _parse_verification_code("000202")[3] == normalize_verification_code(customer.verification_code)
-    assert not _is_valid_verification_code("123456")  # not in the YYMMDD shape
+    assert normalize_verification_code(customer.verification_code) == "000202"
+    assert not _is_valid_verification_code("00020")  # too short
     assert csd.recipient_data.verification_code in (None, "")  # no verification code preloaded
 
 

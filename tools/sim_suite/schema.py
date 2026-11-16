@@ -91,7 +91,6 @@ class Expect:
 @dataclass
 class RunConfig:
     timeout_sec: int
-    away_timeout: int
     stop_on_transfer: bool
 
 
@@ -104,7 +103,6 @@ class Scenario:
     tags: list[str]
     dial_info: str
     phase: int
-    source_calls: list[str]
     api_fixture: Path | None
     runtime_probe: str | None
     allow_blocked: bool
@@ -121,7 +119,6 @@ class SuiteDefaults:
     customer_model: str | None = None
     concurrency: int = 3
     timeout_sec: int = 360
-    away_timeout: int = 90
     # 기본값 False: True 면 customer-sim 이 LeaveMessageTask 핸드오프 시점에
     # 세션을 죽여 메모 대화 자체를 관측할 수 없다. suite.yaml 이 최종 결정권을
     # 가지며 시나리오의 run.stop_on_transfer 가 그 위에 덮어쓴다.
@@ -385,12 +382,11 @@ def load_scenario(path: Path | str, suite: Suite) -> Scenario:
         )
 
     raw_run = _require_mapping(path, data.get("run") or {}, "run")
-    unknown_run = set(raw_run) - {"timeout_sec", "away_timeout", "stop_on_transfer"}
+    unknown_run = set(raw_run) - {"timeout_sec", "stop_on_transfer"}
     if unknown_run:
         raise ScenarioError(path, f"unknown run keys: {', '.join(sorted(unknown_run))}")
     run = RunConfig(
         timeout_sec=int(raw_run.get("timeout_sec", suite.defaults.timeout_sec)),
-        away_timeout=int(raw_run.get("away_timeout", suite.defaults.away_timeout)),
         stop_on_transfer=bool(
             raw_run.get("stop_on_transfer", suite.defaults.stop_on_transfer)
         ),
@@ -432,7 +428,6 @@ def load_scenario(path: Path | str, suite: Suite) -> Scenario:
         tags=_str_list(path, data.get("tags"), "tags"),
         dial_info=dial_info,
         phase=phase,
-        source_calls=_str_list(path, data.get("source_calls"), "source_calls"),
         api_fixture=api_fixture,
         runtime_probe=runtime_probe,
         allow_blocked=allow_blocked,

@@ -2,10 +2,8 @@
 
 gpt-5.6-luna 가 한국어 발화 뒤나 중간에 내부 추론 메모나 다른 언어 단어
 (영어·키릴·구자라트·데바나가리·칸나다·한자 등)를 섞어 TTS 로 읽히는 문제를
-막는다. 케이스 ID 는 2026-09-21~10-21 운영 통화의 call id 이며 누출 부분은
-원문을 그대로 쓴다. 고객 발화 인용과 상담사 이름은 익명화했고, 한국어 문장의
-도메인 표현은 서비스센터 예시로 바꿨다. ID 가 없는 케이스는 규칙 경계를
-고정하려고 만든 예시다.
+막는다. 누출 부분은 실제로 관찰되는 누출 패턴을 본떠 만든 예시이고, 케이스
+ID 는 각 예시가 고정하는 규칙이나 경계를 나타낸다.
 
 규칙: 처음 걸린 문장부터 턴 끝까지 버린다. 한 문장이 여러 규칙에 걸리면
 아래 순서가 앞선 쪽이 reason 이 된다.
@@ -13,7 +11,7 @@ gpt-5.6-luna 가 한국어 발화 뒤나 중간에 내부 추론 메모나 다�
 1. ``foreign_script``: 한글·라틴 외 문자가 1자라도 있다.
 2. ``tool_marker``: ``to=functions.`` · ``】【`` · ``<|`` 가 있다.
 3. ``latin_sentence``: 한글 없는 문장에 영어 단어가 1개 이상 있다.
-   (영어가 전부 2~4자 대문자 약어면 통과: ``OK``, ``MRI``)
+   (영어가 전부 2~4자 대문자 약어면 통과: ``OK``, ``SSD``)
 4. ``latin_run``: 한글 문장 안에 영어 토큰이 공백으로 3개 이상 이어진다.
    (전부 대문자인 이름·약어 run 은 통과: ``PARK HYE JUNG``)
 
@@ -41,8 +39,8 @@ KEEP_CASES = [
     pytest.param(
         "본 통화는 AI 응대로 진행되며, 통화 내용은 녹음됩니다.", id="acronym-ai"
     ),
-    pytest.param("LCD 패널은 점검 후 교체해요.", id="acronym-ipl"),
-    pytest.param("SSD와 PC 점검 모두 가능합니다.", id="acronym-mri-ct"),
+    pytest.param("LCD 패널은 점검 후 교체해요.", id="acronym-lcd"),
+    pytest.param("SSD와 PC 점검 모두 가능합니다.", id="acronym-ssd-pc"),
     pytest.param(
         "WANG YUAN 고객님, 예약이 확인되었습니다.", id="latin-name-two-tokens"
     ),
@@ -55,13 +53,13 @@ KEEP_CASES = [
     ),
     pytest.param("오후 2시 30분, 3시, 4시가 가능합니다.", id="numbers-only"),
     pytest.param("보호 케이스는 3.5mm 두께부터 있어요.", id="decimal-not-split"),
-    pytest.param("Dr. Smith 상담사님으로 예약할까요?", id="dr-abbreviation"),
+    pytest.param("Mr. Smith 상담사님으로 예약할까요?", id="title-abbreviation"),
     pytest.param("잠시만요... 확인해 볼게요.", id="ellipsis"),
     pytest.param(
         "충전 단자가 헐거워진 경우에는 ‘휴대폰 점검 - 단자 접촉 불량 등 긴급 점검’으로 예약할 수 있습니다.",  # noqa: RUF001
-        id="146262-excerpt-quotes-and-dash",
+        id="excerpt-quotes-and-dash",
     ),
-    pytest.param("OK.", id="157378-upper-acronym-sentence"),
+    pytest.param("OK.", id="upper-acronym-sentence"),
     pytest.param("", id="empty"),
     # 한계: 한국어로 쓴 추론 메모는 잡을 수 없다.
     pytest.param("5개 일정 중 나머지 2개도 있음", id="korean-meta-note-undetectable"),
@@ -71,16 +69,16 @@ KEEP_CASES = [
 LEAK_CASES = [
     # 발화 끝에 붙은 누출.
     pytest.param(
-        "어떤 점이 궁금하신지 말씀해 주세요. Pain diagnosis etc can answer limited.",
+        "어떤 점이 궁금하신지 말씀해 주세요. Battery diagnosis etc can answer limited.",
         "어떤 점이 궁금하신지 말씀해 주세요.",
         "latin_sentence",
-        id="172415-pain-note",
+        id="reasoning-note-at-end",
     ),
     pytest.param(
-        "충전 후에 어떤 불편함이 있으신가요? pain etc.",
+        "충전 후에 어떤 불편함이 있으신가요? battery etc.",
         "충전 후에 어떤 불편함이 있으신가요?",
         "latin_sentence",
-        id="171217",
+        id="lowercase-note-after-question",
     ),
     pytest.param(
         "상담원과 바로 연결되지 않아 예약 변경 요청을 메모로 남기려고 합니다. "
@@ -91,19 +89,19 @@ LEAK_CASES = [
         "상담원에게 전달할 내용을 말씀해 주세요. 예를 들면 가능한 예약 날짜나 "
         "변경하고 싶은 내용 등을 말씀하시면 됩니다.",
         "latin_sentence",
-        id="170969",
+        id="english-paraphrase-at-end",
     ),
     pytest.param(
         "소형기기 점검으로 예약을 도와드릴까요? afspraak",
         "소형기기 점검으로 예약을 도와드릴까요?",
         "latin_sentence",
-        id="133125-single-word",
+        id="single-word",
     ),
     pytest.param(
         "원하시는 날짜와 시간을 말씀해 주세요. निश्चित? No, Korean only.",
         "원하시는 날짜와 시간을 말씀해 주세요.",
         "foreign_script",
-        id="122150-devanagari",
+        id="devanagari",
     ),
     pytest.param(
         "휴대폰 점검으로 접수할게요. 10일은 어려우시다는 뜻으로 이해했는데, "
@@ -111,7 +109,7 @@ LEAK_CASES = [
         "휴대폰 점검으로 접수할게요. 10일은 어려우시다는 뜻으로 이해했는데, "
         "언제가 괜찮으세요?",
         "foreign_script",
-        id="128207-cyrillic",
+        id="cyrillic",
     ),
     pytest.param(
         "10월 6일 오후 5시는 자리가 없습니다. 같은 날에는 오후 2시 30분, 3시, "
@@ -119,20 +117,20 @@ LEAK_CASES = [
         "10월 6일 오후 5시는 자리가 없습니다. 같은 날에는 오후 2시 30분, 3시, "
         "4시가 가능합니다. 이 중 어느 시간이 좋으세요?",
         "foreign_script",
-        id="130547-georgian",
+        id="georgian",
     ),
     pytest.param(
         "두 예약 모두 취소하시겠다는 뜻인가요, 아니면 다른 말씀을 하신 걸까요? 国产",
         "두 예약 모두 취소하시겠다는 뜻인가요, 아니면 다른 말씀을 하신 걸까요?",
         "foreign_script",
-        id="159248-han",
+        id="han",
     ),
     pytest.param(
         "김 상담사님과 이 상담사님 중 어느 분으로 예약할까요? "
         "ವೈದ್ಯ assistant to=functions.search_schedules",
         "김 상담사님과 이 상담사님 중 어느 분으로 예약할까요?",
         "foreign_script",
-        id="145890-kannada-and-tool-marker",
+        id="kannada-and-tool-marker",
     ),
     pytest.param(
         "예약 가능한 시간을 말씀해 주세요. よろしくお願いします。",
@@ -145,13 +143,13 @@ LEAK_CASES = [
         "노트북 상담으로 예약하겠습니다. 원하시는 날짜와 시간대가 있으신가요?աբաթ",
         "노트북 상담으로 예약하겠습니다. 원하시는 날짜와 시간대가 있으신가요?",
         "foreign_script",
-        id="135085-armenian-glued",
+        id="armenian-glued",
     ),
     pytest.param(
         "예약 신청을 원하시는 날짜와 시간을 말씀해주세요.日時",
         "예약 신청을 원하시는 날짜와 시간을 말씀해주세요.",
         "foreign_script",
-        id="157096-han-glued-after-period",
+        id="han-glued-after-period",
     ),
     pytest.param(
         "그 날로 예약해 드릴까요?Walgreens",
@@ -167,7 +165,7 @@ LEAK_CASES = [
         "10월 16일 금요일 오전에는 9시 30분, 10시, 10시 30분이 가능합니다. "
         "이 중 어느 시간으로 예약 신청할까요?",
         "latin_run",
-        id="161332-korean-meta-glued",
+        id="korean-meta-glued",
     ),
     # 한국어 단어 자리에 외국어 단어가 들어간 경우: 그 문장부터 버린다.
     pytest.param(
@@ -175,39 +173,39 @@ LEAK_CASES = [
         "તારીખ와 시간대를 말씀해 주세요.",
         "휴대폰 정기점검으로 접수해 드릴게요. 언제 방문을 원하시나요?",
         "foreign_script",
-        id="139756-gujarati-date",
+        id="gujarati-date",
     ),
     pytest.param(
         "휴대폰 점검으로 예약하시겠어요? તારીખ과 시간도 함께 말씀해 주세요.",
         "휴대폰 점검으로 예약하시겠어요?",
         "foreign_script",
-        id="138989-gujarati-date",
+        id="gujarati-date-2",
     ),
     pytest.param(
         "노트북 상담으로 접수할게요. 언제 방문을 원하시나요? "
         "તારીખ/시간을 말씀해 주세요.",
         "노트북 상담으로 접수할게요. 언제 방문을 원하시나요?",
         "foreign_script",
-        id="133289-gujarati-date-slash",
+        id="gujarati-date-slash",
     ),
     pytest.param(
         "노트북 상담 예약을 원하시는군요. 언제 방문을 원하세요? "
         "तारीख와 시간대를 말씀해 주세요.",
         "노트북 상담 예약을 원하시는군요. 언제 방문을 원하세요?",
         "foreign_script",
-        id="171938-devanagari-date",
+        id="devanagari-date",
     ),
     pytest.param(
         "네, 예약 날짜는 2026년 9월 23일입니다. ಇನ್ನ 더 필요한 안내가 있으실까요?",
         "네, 예약 날짜는 2026년 9월 23일입니다.",
         "foreign_script",
-        id="123231-kannada",
+        id="kannada",
     ),
     pytest.param(
         "휴대폰 점검으로 예약하실까요? नियमित점검 목적이면 휴대폰 점검으로 접수합니다.",
         "휴대폰 점검으로 예약하실까요?",
         "foreign_script",
-        id="157535-devanagari-glued-to-hangul",
+        id="devanagari-glued-to-hangul",
     ),
     pytest.param(
         "침수 기기 수리는 전화로 예약 신청이 어렵습니다. 예약 가능한 서비스는 휴대폰 점검, "
@@ -216,19 +214,19 @@ LEAK_CASES = [
         "침수 기기 수리는 전화로 예약 신청이 어렵습니다. 예약 가능한 서비스는 휴대폰 점검, "
         "노트북 상담, 소형기기 점검, 배터리 점검, 화면 점검, 데이터 백업 상담입니다.",
         "foreign_script",
-        id="171369-question-sentence-lost",
+        id="question-sentence-lost",
     ),
     pytest.param(
         "어떤 서비스를 원하시는지 말씀해 주세요. उदाहरण: 화면이 깨졌어요, 배터리가",
         "어떤 서비스를 원하시는지 말씀해 주세요.",
         "foreign_script",
-        id="170064-devanagari-example",
+        id="devanagari-example",
     ),
     pytest.param(
         "노트북 상담으로 예약하시네요. 원하시는 날짜나 시간대가 있으실까요? ವೈದ್ಯಕೀಯ 상담? \n",
         "노트북 상담으로 예약하시네요. 원하시는 날짜나 시간대가 있으실까요?",
         "foreign_script",
-        id="140979-kannada",
+        id="kannada-2",
     ),
     pytest.param(
         "તારીખ와 시간을 말씀해 주세요.",
@@ -243,7 +241,7 @@ LEAK_CASES = [
         '말씀하셔도 됩니다." But if they said 상담은 상담, likely unclear. Keep.',
         "예약하실 날짜와 시간을 말씀해 주세요.",
         "latin_sentence",
-        id="147312-reasoning-with-korean-quote",
+        id="reasoning-with-korean-quote",
     ),
     pytest.param(
         "휴대폰 점검과 노트북 상담 중 어떤 서비스로 예약할까요? Repair-related "
@@ -251,7 +249,7 @@ LEAK_CASES = [
         "general? We should not invent. Ask one.",
         "휴대폰 점검과 노트북 상담 중 어떤 서비스로 예약할까요?",
         "latin_sentence",
-        id="137744",
+        id="reasoning-after-question",
     ),
     pytest.param(
         "희망하시는 날짜와 시간을 말씀해 주세요. ближай? Korean only, avoid "
@@ -260,21 +258,21 @@ LEAK_CASES = [
         "yes. Procedure says",
         "희망하시는 날짜와 시간을 말씀해 주세요.",
         "foreign_script",
-        id="145133-cyrillic-then-reasoning",
+        id="cyrillic-then-reasoning",
     ),
     pytest.param(
         "액정 교체 예약으로 도와드릴게요. 언제 방문을 원하시나요? તારીખ? Need "
         'Korean only, typo slipped. use "날짜와 시간". \n',
         "액정 교체 예약으로 도와드릴게요. 언제 방문을 원하시나요?",
         "foreign_script",
-        id="157339",
+        id="gujarati-then-reasoning",
     ),
     pytest.param(
         '점검 예약 날짜와 시간을 말씀해 주세요. Kef? Need Korean only. "원하시는 '
         '날짜와 시간" one question.',
         "점검 예약 날짜와 시간을 말씀해 주세요.",
         "latin_sentence",
-        id="170612",
+        id="short-latin-word-then-reasoning",
     ),
     pytest.param(
         "침수 기기 수리는 외관 점검과 내부 진단 등 상태 확인 후 수리 여부와 방법을 "
@@ -285,7 +283,7 @@ LEAK_CASES = [
         "정합니다. 부식 정도나 메인보드 상태에 따라 부품 교체 또는 보드 수리가 될 "
         "수 있어요.",
         "latin_sentence",
-        id="151990-newline-separated",
+        id="newline-separated",
     ),
     pytest.param(
         "현재 전화 연결은 계속 진행되지 않지만, 상담원에게 전화 통화를 원하신다는 "
@@ -299,7 +297,7 @@ LEAK_CASES = [
         "현재 전화 연결은 계속 진행되지 않지만, 상담원에게 전화 통화를 원하신다는 "
         "내용을 전달할 수 있습니다. 추가로 남기실 내용이 있으면 말씀해 주세요.",
         "latin_sentence",
-        id="147849-anonymized-tool-call-in-text",
+        id="anonymized-tool-call-in-text",
     ),
     pytest.param(
         "점검으로 예약하겠습니다. 원하시는 날짜와 시간이 있으실까요? datetime 없이 "
@@ -311,7 +309,7 @@ LEAK_CASES = [
         "alongside? call.",
         "점검으로 예약하겠습니다. 원하시는 날짜와 시간이 있으실까요?",
         "latin_run",
-        id="130437-latin-run-in-korean-sentence",
+        id="latin-run-in-korean-sentence",
     ),
     # 도구 호출 형식 표식.
     pytest.param(
@@ -331,16 +329,16 @@ LEAK_CASES = [
         "Yes, English consultation and appointment are available. How may I help you?",
         FALLBACK_UTTERANCE,
         "latin_sentence",
-        id="166359-english-only-reply",
+        id="english-only-reply",
     ),
     pytest.param(
         "죄송하지만 한국어로만 안내해 드리고 있습니다. "
         "Korean-speaking assistance is available.",
         "죄송하지만 한국어로만 안내해 드리고 있습니다.",
         "latin_sentence",
-        id="171282-english-translation",
+        id="english-translation",
     ),
-    pytest.param(" (no", FALLBACK_UTTERANCE, "latin_sentence", id="160469"),
+    pytest.param(" (no", FALLBACK_UTTERANCE, "latin_sentence", id="fragment-only"),
     # 감수하는 오탐: 한글 문장 안의 3단어 이상 대소문자 혼합 제품명.
     pytest.param(
         "네, 가능합니다. 점검 접수는 Example Device Care 센터에서 진행해요.",
@@ -359,7 +357,7 @@ SCRIPT_CASES = [
     pytest.param("말씀해 주세요. სხვა", "georgian", id="georgian"),
     pytest.param("말씀해 주세요?աբաթ", "armenian", id="armenian"),
     pytest.param("말씀해 주세요. よろしく", "hiragana", id="hiragana"),
-    pytest.param("말씀해 주세요. Pain etc.", None, id="latin-has-no-script"),
+    pytest.param("말씀해 주세요. Battery etc.", None, id="latin-has-no-script"),
 ]
 
 
@@ -403,7 +401,7 @@ def test_reports_unicode_script_of_first_foreign_letter(text: str, script: str |
 
 
 def test_dropped_chars_counts_from_leaking_sentence_to_end():
-    leak = "Pain diagnosis etc can answer limited."
+    leak = "Battery diagnosis etc can answer limited."
 
     result = filter_non_korean_leak(
         f"어떤 점이 궁금하신지 말씀해 주세요. {leak}", language=KO
@@ -473,11 +471,11 @@ STREAM_CASES = [
         id="unterminated-leak-judged-at-finish",
     ),
     pytest.param(
-        ["말씀해 주세요. ", "Pain ", "diagnosis ", "etc."],
+        ["말씀해 주세요. ", "Battery ", "diagnosis ", "etc."],
         ["말씀해 주세요."] * 4,
         "말씀해 주세요.",
         "latin_sentence",
-        id="172415-streamed",
+        id="latin-leak-streamed",
     ),
     pytest.param(
         [

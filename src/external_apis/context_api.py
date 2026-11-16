@@ -7,10 +7,7 @@ from fake_backend.config import FAKE_CONTEXT_BASEURL
 from utils.http_client import create_async_http_client
 
 from .api_logging import log_api_exception, log_api_response
-from .types.response_types import (
-    CallContextResponse,
-    SupplementPromptResponse,
-)
+from .types.response_types import CallContextResponse
 
 # Served from local fixtures by the in-process fake backend.
 FAQ_API_BASEURL = os.getenv("FAQ_API_BASEURL", FAKE_CONTEXT_BASEURL)
@@ -46,34 +43,6 @@ async def get_call_context(client_id: int) -> CallContextResponse:
         raise
     except Exception as e:
         log_api_exception("GET_CALL_CONTEXT", e)
-        raise
-
-
-async def get_supplement_prompt(client_id: int) -> SupplementPromptResponse:
-    """고객사별 보충 프롬프트를 조회합니다."""
-    headers = {
-        "accept": "application/json",
-        # No API key: the fake backend does not require one.
-    }
-
-    try:
-        async with await create_async_http_client(timeout=3.0) as client:
-            response = await client.get(
-                f"{FAQ_API_BASEURL}/supplement-prompt/{client_id}",
-                headers=headers,
-            )
-            response.raise_for_status()
-            data = response.json()
-            result = SupplementPromptResponse.model_validate(data)
-            log_api_response("GET_SUPPLEMENT_PROMPT", response, data)
-            return result
-    except httpx.HTTPStatusError as e:
-        log_api_response(
-            "GET_SUPPLEMENT_PROMPT", e.response, _safe_response_json(e.response)
-        )
-        raise
-    except Exception as e:
-        log_api_exception("GET_SUPPLEMENT_PROMPT", e)
         raise
 
 

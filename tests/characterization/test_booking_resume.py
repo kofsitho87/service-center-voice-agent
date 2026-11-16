@@ -268,14 +268,14 @@ def test_resume_preserves_conditions_beyond_history_window_and_clears_candidate(
         dynamic_booking_resume=resume,
         dynamic_booking_pending=DynamicBookingPending(
             service_id=7,
-            service_name="Implant",
+            service_name="Screen Repair",
             operator_id=1,
             operator_name="Advisor",
             datetime="2026-09-29 10:00",
         ),
     )
     chat = llm.ChatContext()
-    chat.add_message(role="user", content="Implant in the morning")
+    chat.add_message(role="user", content="Screen repair in the morning")
     for index in range(20):
         chat.add_message(role="user", content=f"Unrelated question {index}")
     chat.add_message(role="user", content="Find another time")

@@ -47,10 +47,6 @@ def test_korean_date_variables(tmp_path):
     ("language", "weekday"),
     [
         ("en-US", "Tuesday"),
-        ("zh-CN", "星期二"),
-        ("ja-JP", "火曜日"),
-        ("es-ES", "martes"),
-        ("vi-VN", "Thứ Ba"),
         ("fr-FR", "Tuesday"),  # unknown languages fall back to English names
     ],
 )
@@ -64,9 +60,9 @@ def test_non_korean_date_variables(tmp_path, language, weekday):
 
 def test_language_kwarg_is_accepted_as_language_code(tmp_path):
     rendered = load_prompt(
-        _write(tmp_path, "instructions: '{day_of_week}'\n"), language="ja-JP"
+        _write(tmp_path, "instructions: '{day_of_week}'\n"), language="en-US"
     )
-    assert rendered == "火曜日"
+    assert rendered == "Tuesday"
 
 
 def test_variant_and_language_key_fallback_chain(tmp_path):
@@ -81,7 +77,7 @@ def test_variant_and_language_key_fallback_chain(tmp_path):
     assert load_prompt(path, variant="context", language_code="en-US") == "context"
     assert load_prompt(path, language_code="en-US") == "english"
     assert load_prompt(path, language_code="ko-KR") == "base"
-    assert load_prompt(path, variant="missing", language_code="ja-JP") == "base"
+    assert load_prompt(path, variant="missing", language_code="fr-FR") == "base"
 
 
 def test_user_kwargs_override_default_variables(tmp_path):

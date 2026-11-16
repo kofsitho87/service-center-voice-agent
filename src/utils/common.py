@@ -128,36 +128,24 @@ def normalize_phone(phone: str) -> str:
     return digits
 
 
-def normalize_verification_code(verification_code: str | None, separator: str = "-") -> str | None:
-    """Convert verification_code to standard YYYY-MM-DD format."""
+VERIFICATION_CODE_LENGTH = 6
+
+
+def normalize_verification_code(verification_code: str | None) -> str | None:
+    """Return the demo verification code as a plain 6-digit string.
+
+    Separators and spaces are ignored. Empty input returns None; anything that is
+    not exactly 6 digits raises ValueError.
+    """
     if verification_code is None or verification_code == "":
         return None
 
-    # Remove all non-digit characters
     digits = re.sub(r"\D", "", verification_code)
-
-    if len(digits) == 8:  # YYYYMMDD format
-        year = digits[:4]
-        month = digits[4:6]
-        day = digits[6:8]
-    elif len(digits) == 6:  # YYMMDD format
-        year = digits[:2]
-        month = digits[2:4]
-        day = digits[4:6]
-
-        # Convert YY to YYYY (assume 1900-2099)
-        year = f"19{year}" if int(year) > 50 else f"20{year}"
-    else:
+    if len(digits) != VERIFICATION_CODE_LENGTH:
         raise ValueError(
-            "Invalid verification code. Please provide it in YYYY-MM-DD, YYYYMMDD, or YYMMDD format."
+            f"Invalid verification code. Please provide {VERIFICATION_CODE_LENGTH} digits."
         )
-
-    # Validate the date
-    try:
-        datetime.strptime(f"{year}-{month}-{day}", "%Y-%m-%d")
-        return f"{year}{separator}{month}{separator}{day}"
-    except ValueError:
-        raise ValueError("Invalid date. Please provide a valid date.")
+    return digits
 
 
 def sanitize_for_path(name: str) -> str:

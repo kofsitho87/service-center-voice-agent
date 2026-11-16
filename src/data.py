@@ -1,4 +1,3 @@
-import re
 from dataclasses import asdict, dataclass, field, is_dataclass
 from typing import Any, Literal, Optional, Union
 
@@ -80,21 +79,6 @@ def _coerce_schedule_lookup_days(value: Any) -> int:
     return lookup_days
 
 
-_POSTAL_CODE_PREFIX_RE = re.compile(r"^\(\d{5,6}\)\s*")
-
-
-def _strip_postal_code_prefix(address: Any) -> Optional[str]:
-    """주소 앞의 우편번호 접두사 '(38632)' 형식을 제거한다."""
-    if address is None:
-        return None
-    if not isinstance(address, str):
-        return str(address)
-    normalized = address.strip()
-    if not normalized:
-        return normalized
-    return _POSTAL_CODE_PREFIX_RE.sub("", normalized, count=1)
-
-
 def _normalize_transfer_record_dict(value: dict[str, Any]) -> dict[str, Any]:
     normalized = value.copy()
     transfer_status = normalized.get("transfer_status")
@@ -131,8 +115,6 @@ class BusinessData:
     def __setattr__(self, name: str, value: Any) -> None:
         if name == "client_id":
             value = _coerce_client_id_value(value)
-        elif name == "client_address":
-            value = _strip_postal_code_prefix(value)
         object.__setattr__(self, name, value)
 
 
@@ -157,9 +139,6 @@ class RecipientData:
     phone: Optional[str] = None
     verification_code: Optional[str] = None
     customer_no: Optional[str] = None
-
-    # 고객 방문 타입: NEW(신규 고객), REVISIT(기존 고객)
-    customer_visit: Literal["NEW", "REVISIT", "FAIL"] = "NEW"
 
     # Sip participant identity
     sip_identity: Optional[str] = None
@@ -195,25 +174,12 @@ class BookingAgentActionConfig:
 
 
 @dataclass
-class InfoAgentActionConfig:
-    """에이전트별 액션 모드 설정"""
-
-    introduction: Literal["auto", "transfer", "leave_memo"] = "auto"
-    visit_guide: Literal["auto", "transfer", "leave_memo"] = "auto"
-    advisor_guide: Literal["auto", "transfer", "leave_memo"] = "auto"
-    service_guide: Literal["auto", "transfer", "leave_memo"] = "auto"
-    certificate: Literal["auto", "transfer", "leave_memo"] = "auto"
-    events: Literal["auto", "transfer", "leave_memo"] = "auto"
-
-
-@dataclass
 class AgentsConfig:
     """전체 에이전트 설정"""
 
     booking_agent: BookingAgentActionConfig = field(
         default_factory=BookingAgentActionConfig
     )
-    info_agent: InfoAgentActionConfig = field(default_factory=InfoAgentActionConfig)
 
 
 @dataclass
@@ -232,27 +198,11 @@ class BookingCreateFlowConfig:
 
 
 @dataclass
-class BookingModifyFlowConfig:
-    allow_same_day_reservation: bool = True
-
-
-@dataclass
-class BookingCancelFlowConfig:
-    allow_same_day_reservation: bool = True
-
-
-@dataclass
 class BookingFlowConfig:
     # 오늘부터 예약 가능 일정을 조회할 마지막 날짜의 일수 오프셋
     schedule_lookup_days: int = 50
     booking_create: BookingCreateFlowConfig = field(
         default_factory=BookingCreateFlowConfig
-    )
-    booking_modify: BookingModifyFlowConfig = field(
-        default_factory=BookingModifyFlowConfig
-    )
-    booking_cancel: BookingCancelFlowConfig = field(
-        default_factory=BookingCancelFlowConfig
     )
 
 
@@ -288,10 +238,6 @@ class CallConfigData:
     language: Literal[
         "ko-KR",  # Korean
         "en-US",  # English (United States)
-        "zh-CN",  # Chinese (Simplified, China)
-        "ja-JP",  # Japanese
-        "es-ES",  # Spanish (Spain)
-        "vi-VN",  # Vietnamese
     ] = "ko-KR"
     # Agent LLM in ``provider:model`` format (for example, openai:gpt-5.4-mini).
     llm_model: Optional[str] = None
@@ -318,10 +264,6 @@ class CallConfigData:
         language_mapping = {
             "ko-KR": "한국어",
             "en-US": "English",
-            "zh-CN": "中文",
-            "ja-JP": "日本語",
-            "es-ES": "Español",
-            "vi-VN": "Tiếng Việt",
         }
         return language_mapping.get(self.language, "한국어")
 
@@ -717,7 +659,7 @@ class CallSessionData:
     # 플로우 설정
     flow_config: Optional[FlowConfig] = None
 
-    # Warm transfer 진행 중 여부 (user_presence_task 중지용)
+    # Warm transfer 진행 중 여부 (통화 상태 기록용)
     is_warm_transferring: bool = False
 
     # Caller(SIP participant)가 이미 끊었는지 여부
@@ -793,18 +735,7 @@ class CallSessionData:
             booking_cancel=booking_agent_config_dict.get("booking_cancel", "auto"),
             booking_inquiry=booking_agent_config_dict.get("booking_inquiry", "auto"),
         )
-        info_agent_config_dict = agents_config_dict.get("info_agent", {})
-        info_agent_config = InfoAgentActionConfig(
-            introduction=info_agent_config_dict.get("introduction", "auto"),
-            visit_guide=info_agent_config_dict.get("visit_guide", "auto"),
-            advisor_guide=info_agent_config_dict.get("advisor_guide", "auto"),
-            service_guide=info_agent_config_dict.get("service_guide", "auto"),
-            certificate=info_agent_config_dict.get("certificate", "auto"),
-            events=info_agent_config_dict.get("events", "auto"),
-        )
-        agents_config = AgentsConfig(
-            booking_agent=booking_agent_config, info_agent=info_agent_config
-        )
+        agents_config = AgentsConfig(booking_agent=booking_agent_config)
 
         call_config_data = CallConfigData(
             language=call_config_dict.get("language", "ko-KR"),
@@ -834,16 +765,6 @@ class CallSessionData:
             or workflow_booking_config_dict.get("create", {})
             or {}
         )
-        booking_modify_flow_config_dict = (
-            workflow_booking_config_dict.get("booking_modify", {})
-            or workflow_booking_config_dict.get("modify", {})
-            or {}
-        )
-        booking_cancel_flow_config_dict = (
-            workflow_booking_config_dict.get("booking_cancel", {})
-            or workflow_booking_config_dict.get("cancel", {})
-            or {}
-        )
         service_selection_config_dict = (
             booking_create_flow_config_dict.get("service_selection", {}) or {}
         )
@@ -866,16 +787,6 @@ class CallSessionData:
                         free_utterance=service_selection_config_dict.get(
                             "free_utterance", False
                         ),
-                    ),
-                ),
-                booking_modify=BookingModifyFlowConfig(
-                    allow_same_day_reservation=booking_modify_flow_config_dict.get(
-                        "allow_same_day_reservation", True
-                    ),
-                ),
-                booking_cancel=BookingCancelFlowConfig(
-                    allow_same_day_reservation=booking_cancel_flow_config_dict.get(
-                        "allow_same_day_reservation", True
                     ),
                 ),
             ),

@@ -1,73 +1,72 @@
-# Evaluation
+# 평가
 
-There are three kinds of evidence:
+검증은 세 가지 방식으로 했습니다.
 
-- **Offline.** Runs need no credentials or network. `tests/conftest.py`
-  blocks non-loopback sockets, pins the business clock to Monday 2026-11-16
-  09:30 KST, and isolates the demo database and outbox per test. These tests
-  check application contracts with scripted model turns, not language
-  understanding.
-- **Live text.** The real text entrypoint runs with an LLM-simulated caller
-  and an LLM judge.
-- **Live voice.** STT and TTS run with a microphone and speakers.
+- **오프라인 테스트:** 키나 네트워크 없이 돕니다. `tests/conftest.py`가 외부
+  네트워크 연결을 막고, 업무 시계를 2026-11-16(월) 09:30 KST로 고정하며, 테스트마다
+  데모 DB와 발신 기록을 따로 씁니다. 모델 응답은 미리 정해 둔 것을 쓰므로, 언어
+  이해 능력이 아니라 프로그램의 약속(계약)을 검증합니다.
+- **실시간 텍스트 테스트:** 실제 텍스트 실행 파일을 LLM이 연기하는 가상 고객과
+  통화시키고, 다른 LLM이 결과를 채점합니다.
+- **실시간 음성 테스트:** 마이크와 스피커로 음성 인식(STT)과 음성 합성(TTS)을
+  거쳐 통화합니다.
 
-## Offline result
+## 오프라인 테스트 결과
 
-The command is `uv run pytest tests` (about 22 s).
+명령은 `uv run pytest tests`입니다(약 22초).
 
-| Suite | Passed | xfail |
+| 묶음 | 통과 | xfail |
 | --- | --- | --- |
-| `tests/characterization/` (unit and characterization tests) | 1747 | 1 |
+| `tests/characterization/` (단위·동작 고정 테스트) | 1736 | 1 |
 | `tests/scenarios/` (S01–S21) | 26 | 0 |
-| `tests/integration/`, `tests/unit/` (fake backend, reservation write, post-call consumer) | 34 | 0 |
-| **Total** | **1807** | **1** |
+| `tests/integration/`, `tests/unit/` (가짜 백엔드, 예약 저장, 통화 후 분석) | 34 | 0 |
+| **합계** | **1796** | **1** |
 
-The xfail is a known failure:
+xfail 1건은 이미 알려진 실패입니다:
 `test_operator_schedule_lookup_timing::test_empty_exact_date_lookup_only_describes_requested_date`.
-The "no slots" message does not mention the requested date.
+"가능한 시간이 없다"는 안내에 고객이 요청한 날짜가 들어가지 않습니다.
 
-## Scenario matrix
+## 시나리오 표
 
-The paths in the matrix mean:
+표의 "검증 경로"는 다음을 뜻합니다.
 
-- **Task:** the `DynamicBookingTask` tools run for real.
-- **Parent:** the real `create_new_appointment` body runs, including the
-  reservation write.
-- **Hook:** `submit_current_reservation` runs with real session data.
+- **Task:** `DynamicBookingTask`의 도구가 실제로 실행됩니다.
+- **Parent:** 예약 저장을 포함한 실제 `create_new_appointment` 본문이 실행됩니다.
+- **Hook:** 실제 세션 데이터로 `submit_current_reservation`이 실행됩니다.
 
-All paths use the real `booking_api` client against the fake backend.
+모든 경로가 실제 `booking_api` 클라이언트로 가짜 백엔드를 호출합니다.
 
-| ID | Scenario | Path exercised | Result |
+| ID | 시나리오 | 검증 경로 | 결과 |
 | --- | --- | --- | --- |
-| S01 | Normal booking | Task → Parent → DB | Exactly one row after explicit consent; the task alone writes nothing |
-| S02 | Refusal | Task | Zero writes; the rejected slot is no longer offered |
-| S03 | Time change | Task → Parent | The old consent gets `staging_mismatch`; only the new slot is saved |
-| S04 | Slot taken before commit | Task → Parent → DB | The write returns CONFLICT. There is no double booking, the booking tool is re-entered, and the taken advisor is not offered again |
-| S05 | Retry | Parent ×2 | The request is replayed; one row |
-| S06 | No availability | Task | Empty weekend search; an invented slot cannot be staged |
-| S07 | FAQ interrupts a proposal | Task → Parent | The commit is blocked with `consent_not_fresh` unless consent is the single user turn after the latest proposal; after re-staging and fresh consent, it commits. A commit with no reply is also blocked |
-| S08 | Valid cancellation | Lookup → Hook | Only the owned target is cancelled |
-| S09 | Foreign reference | Lookup → Hook | Not listed; modify and cancel return NOT_FOUND; no mutation, no disclosure |
-| S10 | Tool failure | Hook | ERROR is never announced as success; the caller is handed off to staff |
-| S11 | Invalid date or boundary | Task | Weekend, after-hours, past, and beyond-horizon times cannot be staged |
-| S12 | Stale confirmation | Task | A restored candidate gets `staging_requires_revalidation` |
-| S13 | Handoff busy/available | Trunk client (HMAC) + gateway | Busy → available sequence; the SIP dial is simulated and the target is redacted |
-| S14 | Prompt injection | Task | A commit without a stage, an unknown advisor, and the wrong skill are all blocked |
-| S15 | Concurrent requests | Hook ×2 (parallel) | One ACCEPTED, one CONFLICT; a 6-way backend test is in `tests/integration` |
-| S16 | Session ends awaiting consent | Task | No write; nothing appears in the safe payload |
-| S17 | Modification | Hook | The target moves, the old slot is released, and no new rows are created |
-| S18 | DTMF menu | Keypad dial_info + parser + lookup + code validator | Keys 1–4 map to the booking tools; demo code `000202` matches the customer |
-| S19 | Interrupted booking resumes | Task ×2 | Preferences and rejections survive; prior consent does not |
-| S20 | Queue disconnect cleanup | Warm-transfer queue on fakeredis | Occupancy is released, a duplicate release is safe, and no SIP attempt is made |
-| S21 | Call end and local analysis | Publisher → consumer → SQLite | One safe event, processed once despite redelivery; malformed lines are skipped and offsets resume |
+| S01 | 정상 예약 | Task → Parent → DB | 명시적 동의 뒤 정확히 1건 저장. 태스크만으로는 아무것도 저장하지 않음 |
+| S02 | 거절 | Task | 저장 0건. 거절한 시간은 다시 제안하지 않음 |
+| S03 | 시간 변경 | Task → Parent | 예전 동의는 `staging_mismatch`로 거부되고 새 시간만 저장 |
+| S04 | 확정 직전 다른 사람이 먼저 예약 | Task → Parent → DB | 저장 결과 CONFLICT. 이중 예약 없음. 예약 도구로 돌아가 이미 찬 상담사는 다시 제안하지 않음 |
+| S05 | 재시도 | Parent ×2 | 같은 요청으로 처리되어 1건만 저장 |
+| S06 | 빈 시간 없음 | Task | 주말 검색은 결과 없음. 지어낸 시간은 후보로 올릴 수 없음 |
+| S07 | 제안 중 다른 질문 | Task → Parent | 최근 제안 바로 다음 사용자 발화가 동의가 아니면 `consent_not_fresh`로 확정 차단. 다시 제안하고 새로 동의받으면 확정. 답이 없을 때의 확정도 차단 |
+| S08 | 정상 취소 | Lookup → Hook | 본인 예약만 취소 |
+| S09 | 남의 예약 번호 | Lookup → Hook | 목록에 안 나옴. 변경·취소는 NOT_FOUND. 변경도 정보 노출도 없음 |
+| S10 | 도구 오류 | Hook | ERROR를 성공으로 안내하지 않고 직원에게 연결 |
+| S11 | 잘못된 날짜·경계값 | Task | 주말, 운영시간 외, 지난 시간, 조회 범위 밖은 후보로 올릴 수 없음 |
+| S12 | 오래된 확인 | Task | 복원된 후보는 `staging_requires_revalidation`으로 재확인 필요 |
+| S13 | 직원 연결 통화 중/가능 | 트렁크 클라이언트(HMAC) + 게이트웨이 | 통화 중 → 가능 순서 처리. SIP 발신은 시뮬레이션이고 연결 대상 번호는 가림 |
+| S14 | 프롬프트 주입 | Task | 후보 없이 확정, 없는 상담사, 담당 아닌 서비스 모두 차단 |
+| S15 | 동시 요청 | Hook ×2 (병렬) | 하나는 ACCEPTED, 하나는 CONFLICT. 6개 동시 요청 테스트는 `tests/integration`에 있음 |
+| S16 | 동의 대기 중 통화 종료 | Task | 저장 없음. 외부로 나가는 기록에도 남지 않음 |
+| S17 | 예약 변경 | Hook | 예약이 새 시간으로 옮겨지고 예전 시간은 비워지며 새 행은 생기지 않음 |
+| S18 | 키패드 메뉴 | 키패드 dial_info + 파서 + 조회 + 인증번호 검사 | 1–4번 키가 예약 도구로 연결됨. 데모 인증번호 `000202`가 고객과 일치 |
+| S19 | 중단된 예약 이어가기 | Task ×2 | 선호 조건과 거절 내역은 유지, 예전 동의는 유지하지 않음 |
+| S20 | 대기열에서 끊김 | fakeredis 대기열 | 자리 반납, 중복 반납도 안전, SIP 발신 시도 없음 |
+| S21 | 통화 종료와 통화 후 분석 | 발행 → 소비 → SQLite | 안전한 이벤트 1건을 재전달돼도 한 번만 처리. 깨진 줄은 건너뛰고 읽던 위치부터 이어 읽음 |
 
-## Live regression suite
+## 실시간 회귀 테스트
 
-The command is `uv run python tools/sim-suite.py`. The agent and the simulated
-caller use `openai:gpt-5.6-luna`; the judge uses `openai:gpt-5.4-mini`. Three
-calls run at a time against the shared fake backend.
+명령은 `uv run python tools/sim-suite.py`입니다. 에이전트와 가상 고객은
+`openai:gpt-5.6-luna`, 채점은 `openai:gpt-5.4-mini`를 씁니다. 공유 가짜
+백엔드에 세 통화를 동시에 돌립니다.
 
-| Scenario | Outcome | Business | Quality (judge) | Harness |
+| 시나리오 | 결과 | 업무 판정 | 품질(채점) | 실행 환경 |
 | --- | --- | --- | --- | --- |
 | `create_easy_01_phone_inspection` | booking_created | PASS | PASS | CLEAN |
 | `create_medium_01_refuse_then_other_time` | booking_created | PASS | PASS | CLEAN |
@@ -75,55 +74,51 @@ calls run at a time against the shared fake backend.
 | `safety_01_battery_swelling_decline_staff` | booking_created | PASS | PASS | CLEAN |
 | `cancel_easy_01_confirm` | booking_cancelled | PASS | PASS | CLEAN |
 
-This is one run of 5 scenarios. It is a smoke-level signal, not an accuracy
-estimate.
+5개 시나리오를 한 번 돌린 결과입니다. 정확도 추정이 아니라 기본 동작 확인
+수준의 신호입니다.
 
-## Live text observations
+## 실시간 텍스트 테스트에서 본 것
 
-- **Booking:** search → time choice → advisor choice → full read-back →
-  "네" → commit → one stored row.
-- **FAQ during confirmation:** the agent answered from the center information,
-  presented the proposal again, and committed after fresh consent. The
-  confirmation question was repeated once.
-- **Battery swelling:** the agent gave stop-use advice, asked whether to
-  connect staff, and continued the booking after "no".
-- **Cancellation with two appointments:** the agent listed both, confirmed the
-  chosen one, and cancelled only that row.
-- **Post-call:** `conversation_analysis/main.py` saved one result per call
-  (resolution, tools, reservation ID, duration). Re-running reads no new events.
+- **예약:** 검색 → 시간 선택 → 상담사 선택 → 전체 내용 다시 읽기 → "네" →
+  확정 → 1건 저장.
+- **확인 중 다른 질문:** 센터 정보로 답한 뒤 제안을 다시 하고, 새 동의를 받고
+  확정했습니다. 확인 질문이 한 번 반복됐습니다.
+- **배터리 부풂:** 사용 중지를 안내하고 직원 연결 여부를 물은 뒤, "아니요"라는
+  답에 예약을 이어갔습니다.
+- **예약 2건 중 취소:** 두 건을 모두 읽어 주고, 고른 건을 확인한 뒤 그 건만
+  취소했습니다.
+- **통화 후 분석:** `conversation_analysis/main.py`가 통화마다 결과 1건(처리 결과,
+  사용 도구, 예약 번호, 통화 시간)을 저장했습니다. 다시 실행하면 새 이벤트가 없어
+  아무것도 읽지 않습니다.
 
-Issues found and fixed during live testing:
+실시간 테스트에서 찾아 고친 문제:
 
-1. Ordinary device faults were treated as safety evidence, so bookings were
-   derailed into a memo handoff. Safety evidence now covers battery swelling,
-   overheating, smoke, and burning only.
-2. The battery-safety handoff connected without asking. It now asks first.
-3. The booking success line repeated the service word.
-4. The local console room name ("console") made every call after the first
-   look like a duplicate to the consumer. Results are now keyed by room plus
-   start time.
+1. 일반 고장 증상을 안전 문제로 판단해 예약이 메모 남기기로 빠졌습니다. 이제
+   안전 문제는 배터리 부풂, 과열, 연기, 타는 경우만입니다.
+2. 배터리 안전 상황에서 묻지 않고 바로 직원에게 연결했습니다. 이제 먼저 묻습니다.
+3. 예약 완료 안내에서 서비스 이름이 두 번 나왔습니다.
+4. 로컬 콘솔의 방 이름이 항상 "console"이라, 분석기가 첫 통화 이후를 모두 중복으로
+   봤습니다. 이제 방 이름과 통화 시작 시각을 함께 키로 씁니다.
 
-Known cosmetic issues:
+남아 있는 사소한 문제:
 
-- 12:00 is read as "오후 12시".
-- The leave-message flow says "오후으로".
+- 12:00을 "오후 12시"로 읽습니다.
+- 메모 남기기 흐름에서 "오후으로"라고 말합니다.
 
-## Live voice
+## 실시간 음성 테스트
 
-- **Providers:** STT is `elevenlabs:scribe_v2_realtime`. TTS is
-  `cartesia:sonic-3` with the public Korean voice "Yeji - Clarity Desk"
-  (`1a602be4-3b57-4bef-a270-dfa5efed0541`).
-- **Loopback check (no microphone):** Cartesia synthesized "다음 주 화요일 오후 두 시에
-  휴대폰 점검 예약하고 싶어요." and Scribe transcribed it as "… 오후 2시에 …". The
-  only difference is the numeral style.
-- **Microphone-to-speaker run:** not yet performed
+- **제공자:** STT는 `elevenlabs:scribe_v2_realtime`, TTS는 `cartesia:sonic-3`과
+  공개 한국어 음성 "Yeji - Clarity Desk"(`1a602be4-3b57-4bef-a270-dfa5efed0541`)입니다.
+- **마이크 없는 왕복 확인:** Cartesia로 "다음 주 화요일 오후 두 시에 휴대폰 점검
+  예약하고 싶어요."를 합성하고 Scribe로 받아 적으니 "… 오후 2시에 …"가 나왔습니다.
+  숫자 표기만 다릅니다.
+- **마이크·스피커 실제 통화:** 아직 하지 않았습니다
   (`uv run python src/agent-cli.py console`).
 
-## Known limits
+## 알려진 한계
 
-1. **Fresh consent.** The check blocks a commit when zero or two or more user
-   turns follow the proposal. It cannot tell whether the single following turn
-   is really consent; that judgment stays with the model. A "yes" split across
-   two speech turns triggers a re-confirmation.
-2. **Connected warm transfer.** It is not simulated. The staff handoff always
-   takes the fallback path (retry, then leave a message).
+1. **새 동의 확인:** 제안 뒤 사용자 발화가 0개이거나 2개 이상이면 확정을 막습니다.
+   다만 그 하나의 발화가 정말 동의인지는 판단하지 못하고, 그 판단은 모델이 합니다.
+   "네"가 두 번의 발화로 나뉘어 들어오면 다시 확인을 묻습니다.
+2. **직원 연결 성공:** 시뮬레이션하지 않습니다. 직원 연결은 항상 실패 경로(재시도
+   후 메모 남기기)로 갑니다.

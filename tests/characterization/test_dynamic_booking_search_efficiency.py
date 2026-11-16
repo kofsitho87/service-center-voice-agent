@@ -47,7 +47,6 @@ def _task() -> DynamicBookingTask:
     task._pending_earliest_offer = None
     task._day_rows_cache = {}
     task._date_rows_cache = {}
-    task._service_reservation_setting = "OPERATOR"
     task._call_session_data = SimpleNamespace(
         room_name="synthetic-search-efficiency",
         dynamic_booking_pending=None,

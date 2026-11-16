@@ -54,10 +54,6 @@ class GreetingDtmfTask(KoreanSpeechGuardMixin, AgentTask[GreetingDtmfResult]):
     - Returns None on timeout (caller handles fallback to node.next)
     """
 
-    # 이 Task는 자체 DTMF 타임아웃과 재안내 정책을 사용하므로 전역
-    # user_presence_task가 동시에 실행되지 않도록 한다.
-    suppress_user_presence_task = True
-
     def __init__(
         self,
         *,

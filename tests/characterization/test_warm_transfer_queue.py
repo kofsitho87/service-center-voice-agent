@@ -37,9 +37,8 @@ async def test_enqueue_stores_live_metadata_and_publishes_non_pii_event(
         metadata={
             "phone": "010-0000-0101",
             "user_name": "홍길동",
-            "verification_code": "1990-01-01",
+            "verification_code": "123456",
             "customer_no": "C-123",
-            "customer_visit": "REVISIT",
             "briefing_text": "",
         },
     )
@@ -52,9 +51,8 @@ async def test_enqueue_stores_live_metadata_and_publishes_non_pii_event(
     assert entry["attempt_count"] == "0"
     assert entry["phone"] == "010-0000-0101"
     assert entry["user_name"] == "홍길동"
-    assert entry["verification_code"] == "1990-01-01"
+    assert entry["verification_code"] == "123456"
     assert entry["customer_no"] == "C-123"
-    assert entry["customer_visit"] == "REVISIT"
     assert await queue.get_rank(42, "sip-caller-1") == 0
 
     events = await redis_client.xrange(queue.event_stream_key(42))

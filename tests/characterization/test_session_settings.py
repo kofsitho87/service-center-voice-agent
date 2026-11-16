@@ -11,7 +11,6 @@ from utils.session_settings import (
     PRODUCTION_MAX_TOOL_STEPS,
     PRODUCTION_NON_KO_GOOGLE_VOICE,
     PRODUCTION_STT_CUSTOM_VOCABULARY,
-    PRODUCTION_USER_AWAY_TIMEOUT,
     PRODUCTION_VAD_ACTIVATION_THRESHOLD,
     production_tts_text_transforms,
     production_turn_handling,
@@ -35,7 +34,6 @@ def test_production_values_are_unchanged():
         "상담원 연결",
     )
     assert PRODUCTION_NON_KO_GOOGLE_VOICE == "Aoede"
-    assert PRODUCTION_USER_AWAY_TIMEOUT == 20
     assert PRODUCTION_MAX_TOOL_STEPS == 3
 
 
@@ -112,11 +110,10 @@ def _called_names(path: Path) -> set[str]:
                 "production_turn_handling",
                 "production_tts_text_transforms",
                 "resolve_production_interruption_settings",
-                "load_supplement_prompt",
             },
         ),
         # Text console: no audio pipeline, so only VAD and session limits apply.
-        ("agent-cli-text.py", {"load_production_vad", "load_supplement_prompt"}),
+        ("agent-cli-text.py", {"load_production_vad"}),
     ],
 )
 def test_entrypoints_use_production_settings(entrypoint, required):

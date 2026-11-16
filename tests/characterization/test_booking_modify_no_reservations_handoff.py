@@ -44,7 +44,7 @@ async def test_empty_lookup_uses_existing_configured_staff_route(
     agent._dispatch_transfer = AsyncMock()
     session.current_agent = agent
     userdata = SimpleNamespace(
-        recipient_data=SimpleNamespace(phone="01000000000", verification_code="19880201"),
+        recipient_data=SimpleNamespace(phone="01000000000", verification_code="123456"),
         call_config_data=SimpleNamespace(
             language=language, transfer_mode=transfer_mode, transfer_to=transfer_to
         ),

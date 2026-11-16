@@ -11,7 +11,6 @@ from utils.entrypoint_bootstrap import (
     build_agents_data,
     configure_process_environment,
     kst_now_naive_iso,
-    load_supplement_prompt,
 )
 
 configure_process_environment(dotenv_override=False)
@@ -44,7 +43,6 @@ from utils.session_settings import (
     PRODUCTION_MAX_TOOL_STEPS,
     PRODUCTION_NON_KO_GOOGLE_VOICE,
     PRODUCTION_STT_CUSTOM_VOCABULARY,
-    PRODUCTION_USER_AWAY_TIMEOUT,
     load_production_vad,
     production_tts_text_transforms,
     production_turn_handling,
@@ -95,7 +93,6 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
         task.add_done_callback(background_tasks.discard)
 
     call_session_data = CallSessionData.from_dial_info(ctx, dial_info)
-    track_background_task(load_supplement_prompt(call_session_data))
     call_session_data.agents_data = build_agents_data(
         single_agent=await SingleAgent.create(call_session_data=call_session_data),
     )
@@ -143,7 +140,7 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
 
     llm_model = resolve_agent_llm_model(call_session_data.call_config_data.llm_model)
     logger.bind(agent_llm_model=llm_model).info("Configured agent LLM")
-    # AgentTask 기반 예약 설계(-claude)는 stage·commit을 락으로 직렬화하므로
+    # AgentTask 기반 예약 태스크는 stage·commit을 락으로 직렬화하므로
     # 병렬 툴 호출을 끈다.
     llm = await build_agent_llm_async(
         llm_model,
@@ -172,7 +169,6 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
         ),
         tts_text_transforms=production_tts_text_transforms(),
         llm=llm,
-        user_away_timeout=PRODUCTION_USER_AWAY_TIMEOUT,
         max_tool_steps=PRODUCTION_MAX_TOOL_STEPS,
     )
 

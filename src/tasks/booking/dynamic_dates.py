@@ -109,14 +109,15 @@ def resolve_caller_dates(
 ) -> list[CallerDateHint]:
     """Resolve every date expression in a caller utterance deterministically.
 
-    Gemma searched 10-20 or 10-26 for "다음주 월요일"(10-19) in 10/10 replays when
-    the only help was a week-row calendar at the top of the system prompt. The
-    model does not need to compute anything if the caller's own words are paired
+    Smaller models searched the wrong day for "다음주 월요일" when the only help
+    was a week-row calendar at the top of the system prompt. The model does not
+    need to compute anything if the caller's own words are paired
     with the date right next to the utterance, so the code resolves them.
 
     Covered: 오늘/내일/모레/글피, (이번|다음|담|다다음)주 X요일, bare X요일 (next
-    occurrence, today included), N월 N일, N일 (this month, else next). VerificationCode
-    dates with a year ("87년 9월 4일") and 지난주 are consumed without a hint.
+    occurrence, today included), N월 N일, N일 (this month, else next). Dates with
+    a year (for example a purchase date, "23년 9월 4일") and 지난주 are consumed
+    without a hint.
     Weeks start on Monday, matching build_calendar_block. Order follows the
     utterance; duplicates by date are dropped.
     """
@@ -258,10 +259,10 @@ def _spoken_clock(hhmm: str | None, language: str | None) -> str | None:
 def build_calendar_block(
     today: dt.datetime, schedule_lookup_days: int, lang: str = "ko"
 ) -> str:
-    """ "표현 = 날짜" 조회표: 오늘부터 horizon까지, 지난 날짜는 싣지 않는다. [D8]
+    """ "표현 = 날짜" 조회표: 오늘부터 horizon까지, 지난 날짜는 싣지 않는다.
 
-    주 단위 행(`다음 주: 10-19(월), 10-20(화), ...`)은 Gemma가 칸·행 위치를
-    밀려 읽어 "다음주 월요일"을 10-20·10-26으로 조회했다(10/10). 고객 표현과
+    주 단위 행(`다음 주: 10-19(월), 10-20(화), ...`)은 작은 모델이 칸·행 위치를
+    밀려 읽어 "다음주 월요일"을 엉뚱한 날짜로 조회하게 만든다. 고객 표현과
     같은 문자열을 줄 머리에 두면 계산 대신 찾아 읽는다. 다다음 주까지는 한 줄에
     하루씩, 그 뒤는 상대 요일 표현이 드물어 주 단위 행으로 줄인다. 턴마다
     코드가 붙이는 [날짜 해석]이 1차 근거이고 이 표는 보조다.

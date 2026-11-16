@@ -9,7 +9,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from external_apis import booking_api, fastapi_app_api, sms_api
+from external_apis import booking_api, context_api, sms_api
 from external_apis.types.request_types import (
     GetConfirmedAppointmentsRequest,
     GetCustomerRequest,
@@ -24,8 +24,8 @@ SITE = "demo-device-care"
 
 
 async def test_reference_data_matches_source_shapes():
-    services = await booking_api.get_services(SITE, "ALLOW_ONLY_REVISIT")
-    operators = await booking_api.get_site_operators(SITE, "ALLOW_ONLY_REVISIT")
+    services = await booking_api.get_services(SITE)
+    operators = await booking_api.get_site_operators(SITE)
 
     assert services.success and operators.success
     assert [d.name for d in services.data.services] == [
@@ -44,7 +44,6 @@ async def test_day_slots_respect_hours_bookings_and_today_floor():
         SITE,
         "2026-11-19",
         "2026-11-19",
-        "ALLOW_ONLY_REVISIT",
         schedule_type="DATE_TIME",
         size=100,
     )
@@ -59,7 +58,6 @@ async def test_day_slots_respect_hours_bookings_and_today_floor():
         SITE,
         "2026-11-16",
         "2026-11-16",
-        "ALLOW_ONLY_REVISIT",
         schedule_type="DATE_TIME",
         size=100,
     )
@@ -74,7 +72,6 @@ async def test_date_probe_skips_weekends_and_horizon():
         SITE,
         "2026-11-16",
         "2026-12-31",
-        "ALLOW_ONLY_NEW",
         schedule_type="DATE",
         size=100,
     )
@@ -89,7 +86,6 @@ async def test_service_filter_limits_advisors():
         SITE,
         "2026-11-17",
         "2026-11-17",
-        "ALLOW_ONLY_NEW",
         schedule_type="DATE_TIME",
         size=100,
         service_id=303,
@@ -124,7 +120,7 @@ async def test_customer_lookup_and_owned_appointments():
 
 async def test_read_fault_maps_to_source_failure_shape(monkeypatch):
     monkeypatch.setenv("DEMO_FAULTS", '{"reservation_read": "error"}')
-    response = await booking_api.get_services(SITE, "ALLOW_ONLY_NEW")
+    response = await booking_api.get_services(SITE)
     assert response.success is False and response.data is None
     assert response.message  # server message surfaced by the client
 
@@ -139,7 +135,7 @@ async def test_sms_is_recorded_not_delivered():
 
 
 async def test_call_context_comes_from_local_fixture():
-    context = await fastapi_app_api.get_call_context(9001)
+    context = await context_api.get_call_context(9001)
     assert "가상" in context.data.center_name
     assert "운영 시간" in context.data.context
 

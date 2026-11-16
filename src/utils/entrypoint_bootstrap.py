@@ -2,7 +2,7 @@
 
 Entrypoints call ``configure_process_environment`` before importing modules
 that read environment variables at import time (for example
-``external_apis.fastapi_app_api`` reads ``FAQ_API_BASEURL``). This module must
+``external_apis.context_api`` reads ``FAQ_API_BASEURL``). This module must
 therefore stay import-light: runtime dependencies are imported inside the
 functions that need them.
 """
@@ -14,12 +14,11 @@ from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
-from loguru import logger
 
 if TYPE_CHECKING:
     from livekit.agents import Agent
 
-    from data import AgentsData, CallSessionData
+    from data import AgentsData
 
 _KST = ZoneInfo("Asia/Seoul")
 
@@ -56,44 +55,6 @@ def configure_process_environment(*, dotenv_override: bool) -> None:
 def kst_now_naive_iso() -> str:
     """Current Asia/Seoul wall-clock time as a naive ISO string (call times)."""
     return datetime.now(_KST).replace(tzinfo=None).isoformat()
-
-
-async def load_supplement_prompt(call_session_data: "CallSessionData") -> None:
-    """고객사 보충 프롬프트를 조회해 통화 세션 설정에 주입한다."""
-    from external_apis.fastapi_app_api import get_supplement_prompt
-
-    business_data = call_session_data.business_data
-    client_id = business_data.client_id if business_data else None
-    room_name = call_session_data.room_name
-
-    if client_id is None:
-        logger.bind(
-            event="SUPPLEMENT_PROMPT_FETCH_SKIPPED",
-            room_name=room_name,
-        ).debug("client_id missing; keeping configured supplement prompt")
-        return
-
-    try:
-        supplement_prompt = await get_supplement_prompt(client_id)
-    except Exception as e:
-        logger.bind(
-            event="SUPPLEMENT_PROMPT_FETCH_FAILED",
-            client_id=client_id,
-            room_name=room_name,
-        ).opt(exception=e).debug(
-            "Failed to fetch supplement prompt; keeping configured prompt"
-        )
-        return
-
-    call_session_data.leave_message_flow_config.additional_instructions = (
-        supplement_prompt.prompt_text
-    )
-    logger.bind(
-        event="SUPPLEMENT_PROMPT_FETCHED",
-        client_id=client_id,
-        site_id=supplement_prompt.site_id,
-        room_name=room_name,
-    ).debug("Supplement prompt fetched for leave-message flow")
 
 
 def build_agents_data(*, single_agent: "Agent") -> "AgentsData":

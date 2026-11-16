@@ -29,7 +29,7 @@ def normalize_day_rows(
     service_id: int | None = None,
     operator_id: int | None = None,
 ) -> dict[str, list[int]]:
-    """일시 → eligible 상담사 id(주입 순서). [D6]"""
+    """일시 → eligible 상담사 id(주입 순서)."""
     order = {advisor_id: i for i, advisor_id in enumerate(advisors_by_id)}
     slots: dict[str, list[int]] = {}
     for item in rows:
@@ -55,10 +55,10 @@ def normalize_day_rows(
 def apply_strictly_after(
     slots: dict[str, list[int]], strictly_after: str | None
 ) -> dict[str, list[int]]:
-    """`strictly_after` 초과(그 일시 제외)만 남긴다. [D10]
+    """`strictly_after` 초과(그 일시 제외)만 남긴다.
 
     이름 유래: 과거 `not_before`였으나 "not before 18:00"이 18:00 포함으로
-    읽혀 LLM이 특정 시각 질의에 오용했다(실통화 07-18_15:04). exclusive
+    읽혀 LLM이 특정 시각 질의에 오용했다. exclusive
     의미가 이름에 드러나도록 개명.
     """
     if not strictly_after:
@@ -108,10 +108,10 @@ def add_earliest_only_truncation(
 ) -> dict[str, Any]:
     """earliest_only 로 잘라낸 사실을 응답에 남긴다.
 
-    잘린 1건만 보면 LLM 도 그 날의 유일한 슬롯으로 읽는다. 실통화
-    07-30_12:16 에서 "가장 빠른 시간 몇 신데?" 에 09:30 하나만 돌려주자
-    에이전트가 그 자리에서 확인 질문을 던졌고, 고객이 "그 뒤는?" 으로
-    되묻자 commit 이 staging_mismatch 로 되돌아갔다.
+    잘린 1건만 보면 LLM 도 그 날의 유일한 슬롯으로 읽는다. "가장 빠른 시간
+    몇 신데?" 에 09:30 하나만 돌려주면 에이전트가 그 자리에서 확인 질문을
+    던지고, 고객이 "그 뒤는?" 으로 되물으면 commit 이 staging_mismatch 로
+    되돌아간다.
     """
     if total_slot_count > 1:
         result["earliest_only_truncated"] = {

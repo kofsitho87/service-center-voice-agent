@@ -2,7 +2,7 @@
 
 leave_memo / transfer 로 설정된 센터는 예약 툴 본문을 건너뛰고 후속 태스크로
 넘어간다. 이때 남기는 `BOOKING_CREATE` 이벤트에 status 가 없으면 분석기가
-예약 시도를 열어만 두고 닫지 못해 '본인확인 이탈' 로 오분류했다(통화 107937).
+예약 시도를 열어만 두고 닫지 못해 '본인확인 이탈' 로 오분류한다.
 런타임은 EXITED + reason_code 로 라우팅을 명시하고, mode 는 레거시 분류기의
 booking_create_incomplete 계산을 위해 유지한다.
 """

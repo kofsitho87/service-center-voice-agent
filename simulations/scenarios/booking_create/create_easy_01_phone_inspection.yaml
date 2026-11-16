@@ -19,7 +19,6 @@ persona:
     5. 완료 안내를 들으면 "감사합니다"라고 답한다.
 run:
   timeout_sec: 300
-  away_timeout: 60
   stop_on_transfer: false
 expect:
   outcome: booking_created

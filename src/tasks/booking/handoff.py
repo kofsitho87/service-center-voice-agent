@@ -1,7 +1,5 @@
 """Booking handoff domain: grounded blockers, offers, and caller replies.
 
-Plan: docs/plans/2026-09-29-booking-handoff-final-plan.md.
-
 Program control uses `kind`, `reason_code`, `channel` and `revision`.
 `requested_label`, `searched_range` and `filters` only ground the model's
 explanation; they never select a route. The model speaks the offer.

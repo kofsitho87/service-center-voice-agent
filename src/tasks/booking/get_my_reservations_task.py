@@ -164,7 +164,7 @@ class GetMyReservationsTask:
         # Step 2: Normalize phone and verification_code
         try:
             # phone = normalize_phone(phone)
-            verification_code = normalize_verification_code(verification_code, separator="")
+            verification_code = normalize_verification_code(verification_code)
 
             # Update userdata with normalized verification_code
             userdata.recipient_data.verification_code = verification_code
@@ -188,7 +188,7 @@ class GetMyReservationsTask:
                 site_id=site_id,
                 # phone=normalize_phone(phone),
                 phone=phone,
-                verification_code=normalize_verification_code(verification_code, separator="-"),
+                verification_code=verification_code,
                 customer_no=customer_no,
             )
         except Exception as error:
@@ -326,10 +326,10 @@ class GetMyReservationsTask:
             )
             if self._is_caller_disconnected():
                 return None
-            if not verification_code_result.normalized_date:
+            if not verification_code_result.verification_code:
                 continue
 
             if verification_code_result.confirmed:
-                return verification_code_result.normalized_date
+                return verification_code_result.verification_code
 
         return None

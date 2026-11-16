@@ -104,7 +104,7 @@ async def test_service_not_offered_non_acceptance_waits_silently(
 ):
     context = BookingMemoContext(
         exit_reason_code="service_not_offered",
-        detail="틀니",
+        detail="드론 수리",
     )
     agent, session, ctx = _router_fixture(
         monkeypatch,

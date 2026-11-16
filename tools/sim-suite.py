@@ -8,7 +8,7 @@
     uv run tools/sim-suite.py --list
     uv run tools/sim-suite.py                       # 전체 실행
     uv run tools/sim-suite.py --intent booking_create --difficulty easy
-    uv run tools/sim-suite.py --id create_easy_01_revisit_earliest
+    uv run tools/sim-suite.py --id create_easy_01_phone_inspection
     uv run tools/sim-suite.py --phase 1 --no-judge
     uv run tools/sim-suite.py --compare logs/simulations/suite/<id>/summary.json
 """
@@ -58,19 +58,9 @@ DEFAULT_SUITE = "simulations/suite.yaml"
 DEFAULT_OUT_ROOT = "logs/simulations/suite"
 
 
-def resolve_api_base_url(client_id: int | None = None) -> str:
-    """예약 API base URL을 해석한다(클라이언트별 override 반영)."""
-    # Demo: unset means the in-process fake backend (the agent's own default).
-    base_url = os.getenv("RESERVATION_API_BASEURL", "") or FAKE_RESERVATION_BASEURL
-    if client_id is None:
-        return base_url
-    try:
-        sys.path.insert(0, str(PROJECT_ROOT / "src"))
-        from external_apis.booking_api import _CLIENT_BASEURL_OVERRIDES
-
-        return _CLIENT_BASEURL_OVERRIDES.get(client_id, base_url)
-    except Exception:
-        return base_url
+def resolve_api_base_url() -> str:
+    """예약 API base URL을 해석한다. 미설정이면 프로세스 내 가짜 백엔드다."""
+    return os.getenv("RESERVATION_API_BASEURL", "") or FAKE_RESERVATION_BASEURL
 
 
 def fixture_identity(suite: Suite) -> list[tuple[str, str, str, str]]:

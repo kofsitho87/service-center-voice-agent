@@ -25,10 +25,7 @@ async def test_valid_dtmf_verification_code_uses_deterministic_confirmation_anno
     update_instructions = AsyncMock()
     result = GetDtmfResult(
         user_input="0 2 0 2 0 2",
-        year=2002,
-        month=2,
-        day=2,
-        normalized_date="2002-02-02",
+        verification_code="020202",
     )
     announcement = build_verification_code_confirmation_announcement(
         "020202",
@@ -62,7 +59,7 @@ async def test_valid_dtmf_verification_code_uses_deterministic_confirmation_anno
         extra={
             "agent_event": {
                 "name": "VERIFICATION_CODE_DTMF_TASK",
-                "details": {"date": "2002-02-02"},
+                "details": {"verification_code": "020202"},
                 "status": "CONFIRM",
             }
         },

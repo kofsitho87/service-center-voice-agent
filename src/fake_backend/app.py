@@ -53,12 +53,11 @@ def _read_fault() -> httpx.Response | None:
 # ---------------------------------------------------------------- reservation
 
 
-def site_services(request: httpx.Request, _m: re.Match[str]) -> httpx.Response:
+def site_services(_request: httpx.Request, _m: re.Match[str]) -> httpx.Response:
     if fault := _read_fault():
         return fault
-    setting = request.url.params.get("serviceReservationSetting")
     with store.connection() as conn:
-        return _ok({"services": store.list_services(conn, setting)})
+        return _ok({"services": store.list_services(conn)})
 
 
 def site_operators(_request: httpx.Request, _m: re.Match[str]) -> httpx.Response:
@@ -267,21 +266,6 @@ def call_context(request: httpx.Request, _m: re.Match[str]) -> httpx.Response:
     )
 
 
-def supplement_prompt(_request: httpx.Request, m: re.Match[str]) -> httpx.Response:
-    text = _fixture_text("supplement_prompt.md")
-    if not text.strip():
-        return _json(404, {"detail": "no supplement prompt"})
-    business = store.load_business()
-    return _json(
-        200,
-        {
-            "client_id": int(m["client_id"]),
-            "site_id": business.site_id,
-            "prompt_text": text,
-        },
-    )
-
-
 # --------------------------------------------------------------------- trunk
 
 
@@ -366,12 +350,6 @@ ROUTES: list[tuple[str, str, str, Handler]] = [
     ),
     (config.RESERVATION_HOST, "POST", r"/sms/send", sms_send),
     (config.CONTEXT_HOST, "GET", r"/call-context", call_context),
-    (
-        config.CONTEXT_HOST,
-        "GET",
-        r"/supplement-prompt/(?P<client_id>\d+)",
-        supplement_prompt,
-    ),
     (
         config.TRUNK_HOST,
         "GET",

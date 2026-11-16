@@ -1,11 +1,9 @@
-import asyncio
 import os
 
 from utils.entrypoint_bootstrap import (
     build_agents_data,
     configure_process_environment,
     kst_now_naive_iso,
-    load_supplement_prompt,
 )
 
 configure_process_environment(
@@ -38,7 +36,6 @@ from utils.logging_utils import setup_json_logging
 from utils.session_event_handlers import register_session_event_handlers
 from utils.session_settings import (
     PRODUCTION_MAX_TOOL_STEPS,
-    PRODUCTION_USER_AWAY_TIMEOUT,
     load_production_vad,
 )
 
@@ -103,14 +100,6 @@ async def on_session_end(ctx: JobContext) -> None:
 
 async def agent_session_start(ctx: JobContext, dial_info: dict):
     call_session_data = CallSessionData.from_dial_info(ctx, dial_info)
-    background_tasks: set[asyncio.Task[None]] = set()
-
-    def track_background_task(coro):
-        task = asyncio.create_task(coro)
-        background_tasks.add(task)
-        task.add_done_callback(background_tasks.discard)
-
-    track_background_task(load_supplement_prompt(call_session_data))
     session: AgentSession[CallSessionData] | None = None
 
     ####################### shutdown callback function #######################
@@ -154,7 +143,7 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
         # Text console input has an explicit boundary when Enter is pressed, so
         # neither the cloud turn detector nor the local audio model is needed.
         turn_handling=TurnHandlingOptions(turn_detection="manual"),
-        # AgentTask 기반 예약 설계(-claude)는 stage·commit을 락으로 직렬화하므로
+        # AgentTask 기반 예약 태스크는 stage·commit을 락으로 직렬화하므로
         # 병렬 툴 호출을 끈다.
         # dial_info llm_model / AGENT_LLM_MODEL(--agent-model)을 존중한다 —
         # 고정 LLM을 꽂아두면 두 설정이 조용히 무시된다(groq/compound-mini 는
@@ -163,10 +152,6 @@ async def agent_session_start(ctx: JobContext, dial_info: dict):
         llm=build_agent_llm(
             llm_model,
             parallel_tool_calls=False,
-        ),
-        # 고객 시뮬레이터(tools/customer-sim.py) 실행 시 응답 생성 지연을 흡수하기 위해 env로 조정 가능
-        user_away_timeout=int(
-            os.getenv("USER_AWAY_TIMEOUT", str(PRODUCTION_USER_AWAY_TIMEOUT))
         ),
         max_tool_steps=PRODUCTION_MAX_TOOL_STEPS,
     )

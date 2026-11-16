@@ -324,7 +324,7 @@ class SingleServicePromptTest(TestCase):
         self.assertNotIn("[Service auto-assigned]", _stub_task()._build_instructions())
 
     def test_single_service_renders_configured_response_language(self):
-        for language in ("한국어", "English", "日本語"):
+        for language in ("한국어", "English"):
             for user_request in (False, True):
                 with self.subTest(language=language, user_request=user_request):
                     greeting = self._greeting(
@@ -375,7 +375,7 @@ class PromptLanguageTest(TestCase):
                 if not name.startswith("instructions_"):
                     continue
                 with self.subTest(language=language, name=name):
-                    # Raised from 9,000 for the phrase = date calendar (2026-10-16);
+                    # Raised from 9,000 for the phrase = date calendar;
                     # re-based for the English templates (see PROMPT_BUDGET_CHARS).
                     self.assertLessEqual(len(text), PROMPT_BUDGET_CHARS)
 
@@ -400,7 +400,7 @@ class PromptLanguageTest(TestCase):
             )
         }
 
-        # Raised from 2,300 for the spoken-date / date_corrected contract (2026-10-16).
+        # Raised from 2,300 for the spoken-date / date_corrected contract.
         self.assertLessEqual(len(descriptions["search_schedules"]), 2_500)
         self.assertLessEqual(len(descriptions["stage_booking"]), 700)
         self.assertLessEqual(len(descriptions["commit_booking"]), 500)
@@ -481,7 +481,6 @@ class PromptLanguageTest(TestCase):
         for language, expected in [
             ("ko-KR", ("en", "한국어")),
             ("en-US", ("en", "English")),
-            ("ja-JP", ("en", "日本語")),
         ]:
             with self.subTest(language=language):
                 call_config = CallConfigData(language=language)
@@ -493,7 +492,7 @@ class PromptLanguageTest(TestCase):
         self.assertEqual(dbt._prompt_language(session_data), ("en", "한국어"))
 
     def test_english_prompts_inject_default_language(self):
-        for language in ("한국어", "English", "日本語"):
+        for language in ("한국어", "English"):
             with self.subTest(language=language):
                 task = _stub_task(default_language=language)
                 instructions = task._build_instructions()

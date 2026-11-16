@@ -18,7 +18,6 @@ persona:
     4. 확인 질문에는 "네, 그걸로 해 주세요"라고 답한다.
 run:
   timeout_sec: 300
-  away_timeout: 60
   stop_on_transfer: false
 expect:
   outcome: booking_created

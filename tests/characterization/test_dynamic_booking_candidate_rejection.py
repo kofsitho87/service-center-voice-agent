@@ -30,8 +30,8 @@ CALLER_TIMES = (
 @pytest.fixture
 def task(monkeypatch):
     task = object.__new__(DynamicBookingTask)
-    task._services = [{"id": 10, "name": "Implant", "keywords": []}]
-    task._advisors = [{"id": 100, "name": "Provider", "service_ids": [10]}]
+    task._services = [{"id": 10, "name": "Screen Repair", "keywords": []}]
+    task._advisors = [{"id": 100, "name": "Advisor", "service_ids": [10]}]
     task._advisors_by_id = {100: task._advisors[0]}
     task._select_operator = False
     task._schedule_lookup_days = 30
@@ -52,9 +52,9 @@ def task(monkeypatch):
     task._set_staged(
         StagedBooking(
             service_id=10,
-            service_name="Implant",
+            service_name="Screen Repair",
             operator_id=100,
-            operator_name="Provider",
+            operator_name="Advisor",
             datetime=FIRST,
         )
     )
@@ -323,7 +323,7 @@ async def test_resumed_duplicate_rejection_is_idempotent_and_preserves_appointme
     result = await DynamicBookingTask.reject_candidate._func(task)
     assert result["status"] == "already_rejected"
     assert result["datetime"] == FIRST
-    assert result["service"] == {"id": 10, "name": "Implant"}
+    assert result["service"] == {"id": 10, "name": "Screen Repair"}
     assert result["search_conditions"]["service_id"] == 10
     assert result["required_next_tool"] == "search_schedules"
     assert task._rejected_candidates == original_records
@@ -496,9 +496,9 @@ async def test_another_time_request_searches_same_date_without_preference_questi
     task._set_staged(
         StagedBooking(
             service_id=10,
-            service_name="Implant",
+            service_name="Screen Repair",
             operator_id=100,
-            operator_name="Provider",
+            operator_name="Advisor",
             datetime=LATER,
         )
     )

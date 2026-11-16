@@ -310,7 +310,7 @@ async def create_new_appointment(ctx: RunContext_T) -> None:
     # 기본 필드(type/service_id/operator_id/일시)는 태스크 commit_booking이
     # 이미 채웠다. 여기서는 상위 플로우가 아는 정보만 병합한다.
     try:
-        verification_code = normalize_verification_code(verification_code, separator="-")
+        verification_code = normalize_verification_code(verification_code)
     except ValueError as e:
         ctx.session.history.add_message(
             role="developer",

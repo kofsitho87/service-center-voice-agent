@@ -111,7 +111,6 @@ class SingleRoomWarmTransferTask(KoreanSpeechGuardMixin, AgentTask[WarmTransferR
         chat_ctx: llm.ChatContext | None = None,
         extra_instructions: str = "",
         customer_name: str | None = None,
-        is_new_customer: bool = False,
         agent_connection_timeout: float = 45.0,
         dtmf_timeout: float = 30.0,
         transfer_record: TransferRecord | None = None,
@@ -133,7 +132,6 @@ class SingleRoomWarmTransferTask(KoreanSpeechGuardMixin, AgentTask[WarmTransferR
             chat_ctx: 이전 대화 컨텍스트
             extra_instructions: 추가 지시사항
             customer_name: 고객 이름 (기존 고객인 경우)
-            is_new_customer: 신규 고객 여부
             agent_connection_timeout: 상담원 연결 타임아웃 (초)
             dtmf_timeout: DTMF 입력 대기 타임아웃 (초)
             realtime_update_callback: 브리핑/상태를 외부 live-state 저장소에 반영하는 callback
@@ -146,7 +144,6 @@ class SingleRoomWarmTransferTask(KoreanSpeechGuardMixin, AgentTask[WarmTransferR
         self._caller_identity = caller_identity
         self._extra_instructions = extra_instructions
         self._customer_name = customer_name
-        self._is_new_customer = is_new_customer
         self._language_code = language_code
         self._realtime_update_callback = realtime_update_callback
         self._queued_briefing_future = queued_briefing_future
@@ -287,7 +284,6 @@ class SingleRoomWarmTransferTask(KoreanSpeechGuardMixin, AgentTask[WarmTransferR
         briefing_text = await generate_warm_transfer_briefing_text(
             conversation_history=self._conversation_history,
             customer_name=self._customer_name,
-            is_new_customer=self._is_new_customer,
             language_code=self._language_code,
             extra_instructions=self._extra_instructions,
         )

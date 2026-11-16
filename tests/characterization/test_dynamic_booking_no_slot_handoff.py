@@ -1,7 +1,6 @@
 """Booking handoff controller, with synthetic local schedules and no live services.
 
-Plan: docs/plans/2026-09-29-booking-handoff-final-plan.md (revision v3). Code
-decides when a help offer is available and returns it as ``handoff_offer``; the
+Code decides when a help offer is available and returns it as ``handoff_offer``; the
 model speaks it. Code keeps consent, decline and session-level offer history.
 """
 
@@ -40,8 +39,8 @@ class _Handle:
 def _build_task(call_session_data, monkeypatch, speech):
     task = object.__new__(DynamicBookingTask)
     task._select_operator = False
-    task._services = [{"id": 10, "name": "Checkup", "keywords": []}]
-    task._advisors = [{"id": 100, "name": "Provider", "service_ids": [10]}]
+    task._services = [{"id": 10, "name": "Inspection", "keywords": []}]
+    task._advisors = [{"id": 100, "name": "Advisor", "service_ids": [10]}]
     task._advisors_by_id = {100: task._advisors[0]}
     task._schedule_lookup_days = 30
     task._staged = None
@@ -126,7 +125,7 @@ def _events(history, status):
     ]
 
 
-async def _report(task, subject="service", requested_label="틀니", **kwargs):
+async def _report(task, subject="service", requested_label="드론 수리", **kwargs):
     return await DynamicBookingTask.report_booking_obstacle._func(
         task, subject=subject, requested_label=requested_label, **kwargs
     )
@@ -258,7 +257,7 @@ async def test_narrowing_within_presented_dates_is_not_a_decline(task):
 
 @pytest.mark.asyncio
 async def test_fixed_condition_is_offered_at_once(task):
-    await _miss_with_nearby(task, "2026-09-12", "Provider 선생님으로 오후 2시요")
+    await _miss_with_nearby(task, "2026-09-12", "Advisor 상담사님으로 오후 2시요")
     _user(task, "그날 그 시간밖에 안 돼요")
     result = await _report(task, subject="schedule", requested_label=None)
     assert result["status"] == "handoff_offer"
@@ -330,7 +329,7 @@ async def test_time_filtered_advisor_hint_is_not_a_verified_alternative(task):
         return [] if operator_id == 100 else ["2026-09-14"]
 
     task._fetch_available_dates = dates
-    _user(task, "다음 주 오후 2시에 Provider 선생님으로요")
+    _user(task, "다음 주 오후 2시에 Advisor 상담사님으로요")
     result = await _search(
         task, end="2026-09-18", new_turn=False, operator_id=100, target_time="14:00"
     )
@@ -350,7 +349,7 @@ async def test_other_advisors_on_the_day_count_as_an_alternative(task):
         return {when: ids for when, ids in rows.items() if operator_id in ids}
 
     task._fetch_day = fetch_day
-    _user(task, "Provider 선생님으로 오후 2시요")
+    _user(task, "Advisor 상담사님으로 오후 2시요")
     result = await _search(task, new_turn=False, target_time="14:00", operator_id=100)
     assert result["other_advisors_available"] is True
     assert task._schedule_blocker.alternative_slot_count == 1
@@ -365,10 +364,10 @@ async def test_other_advisors_on_the_day_count_as_an_alternative(task):
 )
 async def test_off_list_service_is_offered_immediately(task, config, channel):
     task._call_session_data.call_config_data = config
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     result = await _report(task)
     assert result["status"] == "handoff_offer"
-    assert result["blocker"]["requested_label"] == "틀니"
+    assert result["blocker"]["requested_label"] == "드론 수리"
     assert result["handoff_offer"]["channel"] == channel
     assert task._offer_pending.reason_code == "service_not_offered"
     task.complete.assert_not_called()
@@ -376,16 +375,16 @@ async def test_off_list_service_is_offered_immediately(task, config, channel):
 
 @pytest.mark.asyncio
 async def test_listed_service_cannot_be_reported_as_off_list(task):
-    result = await _report(task, requested_label="check up")
+    result = await _report(task, requested_label="inspection")
     assert result["code"] == "listed_in_catalog"
     assert result["id"] == 10
 
 
 @pytest.mark.asyncio
 async def test_second_report_after_an_offer_is_suppressed(task):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
-    _user(task, "틀니요")
+    _user(task, "드론 수리요")
     await _answer(task, "other")
     result = await _report(task)
     assert result["status"] == "handoff_suppressed"
@@ -415,13 +414,13 @@ async def test_verified_other_advisor_is_offered_once_before_handoff(
 ):
     task._select_operator = select_operator
     task._fetch_available_dates = _dates_for({100: ["2026-09-14"]})
-    _user(task, "송형석 상담사님으로 Checkup 예약하고 싶어요")
+    _user(task, "송형석 상담사님으로 Inspection 예약하고 싶어요")
     result = await _report_advisor(task, service_id=10)
     assert result["status"] == "alternative_available"
     assert task._offer_pending is None
     if select_operator:
         assert result["alternative_advisors"] == [
-            {"id": 100, "name": "Provider", "earliest_date": "2026-09-14"}
+            {"id": 100, "name": "Advisor", "earliest_date": "2026-09-14"}
         ]
     else:
         assert result["alternative"] == {
@@ -532,11 +531,11 @@ def test_advisor_name_match_levels(reference, name, expected):
     ("utterance", "question", "reply"),
     [
         ("휴대폰 점검 예약하려고요", None, None),
-        ("정선생님 예약하려구요", None, None),
+        ("정 엔지니어님 예약하려구요", None, None),
         ("정지수 상담사님 예약하려구요", None, None),
         (
-            "정선생님 예약하려구요",
-            "정진수 선생님을 말씀하시나요? 어떤 서비스로 예약할까요?",
+            "정 엔지니어님 예약하려구요",
+            "정진수 상담사님을 말씀하시나요? 어떤 서비스로 예약할까요?",
             "노트북 상담이요",
         ),
     ],
@@ -604,7 +603,7 @@ async def test_exact_name_and_offered_advisors_need_no_confirmation(task):
     _user(task, "정진수 상담사님으로 예약할게요")
     task._fetch_day.return_value = {"2026-09-12 10:00": [100, 200]}
     assert (await _search(task, new_turn=False, operator_id=100))["status"] == "ok"
-    _user(task, "그럼 다른 선생님으로요")
+    _user(task, "그럼 다른 상담사님으로요")
     result = await _search(task, new_turn=False)
     assert 200 in {d["id"] for slot in result["slots"] for d in slot.get("advisors", [])}
     staged = await _stage(task, "2026-09-12 10:00", operator_id=200)
@@ -654,7 +653,7 @@ async def test_exact_listed_advisor_with_title_is_not_off_list(task):
 
 @pytest.mark.asyncio
 async def test_fresh_accept_completes_once_with_legacy_reason(task, history):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
     _user(task, "네 남겨주세요")
     assert await _answer(task, "accept") is None
@@ -667,7 +666,7 @@ async def test_fresh_accept_completes_once_with_legacy_reason(task, history):
 
 @pytest.mark.asyncio
 async def test_accept_in_the_same_turn_as_the_offer_is_rejected(task):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
     result = await _answer(task, "accept")
     assert result["code"] == "consent_not_fresh"
@@ -717,7 +716,7 @@ async def test_commit_waits_for_the_handoff_answer(task):
 
 @pytest.mark.asyncio
 async def test_decline_keeps_booking_and_suppresses_further_offers(task, history):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
     _user(task, "연결은 싫고 예약만 할게요")
     result = await _answer(task, "decline")
@@ -738,7 +737,7 @@ async def test_decline_keeps_booking_and_suppresses_further_offers(task, history
 
 @pytest.mark.asyncio
 async def test_refusal_evidence_in_reply_to_the_offer_declines_it(task, history):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
     refusal = "아니요 괜찮아요"
     _user(task, refusal)
@@ -761,18 +760,18 @@ async def test_decline_with_a_candidate_in_progress_has_no_stop_hint(task):
 
 @pytest.mark.asyncio
 async def test_refusal_survives_task_reentry(task, monkeypatch, speech):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
     _user(task, "싫어요")
     await _answer(task, "decline")
     reentered = _build_task(task._call_session_data, monkeypatch, speech)
-    _user(reentered, "틀니요")
+    _user(reentered, "드론 수리요")
     assert (await _report(reentered))["status"] == "handoff_suppressed"
 
 
 @pytest.mark.asyncio
 async def test_other_reply_withdraws_the_offer_without_a_refusal(task):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
     _user(task, "그럼 다음 주에 Checkup으로 찾아주세요")
     assert await _answer(task, "other") == {"status": "booking_continues"}
@@ -782,7 +781,7 @@ async def test_other_reply_withdraws_the_offer_without_a_refusal(task):
 
 @pytest.mark.asyncio
 async def test_accept_after_schedule_offer_builds_grounded_memo(task):
-    await _miss_with_nearby(task, "2026-09-12", "Provider 선생님으로 오후 2시요")
+    await _miss_with_nearby(task, "2026-09-12", "Advisor 상담사님으로 오후 2시요")
     _user(task, "그 시간밖에 안 돼요")
     await _report(task, subject="schedule", requested_label=None)
     _user(task, "네")
@@ -790,7 +789,7 @@ async def test_accept_after_schedule_offer_builds_grounded_memo(task):
     result = task.complete.call_args.args[0]
     assert result.exit_reason_code == "no_slot_memo"
     context = task._call_session_data.booking_memo_context
-    assert context.service_name == "Checkup"
+    assert context.service_name == "Inspection"
     assert context.time_condition == "오후 2시"
     assert context.searched_ranges == ["2026-09-12~2026-09-12"]
 
@@ -808,7 +807,7 @@ async def test_memo_names_a_morning_window_plainly(task):
 
 @pytest.mark.asyncio
 async def test_staff_request_in_reply_to_offer_keeps_the_grounded_reason(task):
-    _user(task, "틀니로 해야 돼")
+    _user(task, "드론 수리로 해야 돼")
     await _report(task)
     _user(task, "네 연결해 주세요")
     await DynamicBookingTask.exit_task._func(task, reason_code="staff_connection")
@@ -878,8 +877,8 @@ def test_forced_turn_layer_is_gone():
 
 @pytest.mark.asyncio
 async def test_stop_with_nothing_chosen_skips_the_cancel_question(task, speech):
-    _user(task, "라식 수술 예약하려고요")
-    await _report(task, requested_label="라식 수술")
+    _user(task, "드론 수리 예약하려고요")
+    await _report(task, requested_label="드론 수리")
     _user(task, "아니요 괜찮아요")
     await _answer(task, "decline")
     _user(task, "다른 예약은 없어요")
@@ -925,9 +924,9 @@ async def test_reject_candidate_with_issue_offers_staff_help(task):
     task._set_staged(
         StagedBooking(
             service_id=10,
-            service_name="Checkup",
+            service_name="Inspection",
             operator_id=100,
-            operator_name="Provider",
+            operator_name="Advisor",
             datetime="2026-09-12 10:00",
         )
     )
@@ -944,9 +943,9 @@ async def test_reject_candidate_without_issue_has_no_offer(task):
     task._set_staged(
         StagedBooking(
             service_id=10,
-            service_name="Checkup",
+            service_name="Inspection",
             operator_id=100,
-            operator_name="Provider",
+            operator_name="Advisor",
             datetime="2026-09-12 10:00",
         )
     )

@@ -5,7 +5,6 @@ defaults:
   judge_model: "openai:gpt-5.4-mini"
   concurrency: 3
   timeout_sec: 360
-  away_timeout: 90
   stop_on_transfer: false
   # 모든 시나리오에 자동으로 합쳐지는 전역 금지 패턴(TTS 회귀 방지).
   # 마크다운 볼드, ISO 날짜, 24시간 시:분 표기는 음성으로 읽히면 안 된다.

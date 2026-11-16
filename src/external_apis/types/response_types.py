@@ -99,8 +99,6 @@ class ConfirmedAppointmentItem(BaseModel):
     memo: str | None = None
     appointmentDetail: str | None = None
     reservationRecordId: str | None = None
-    todayModifiable: bool
-    todayCancellable: bool
 
 
 class CustomerItem(BaseModel):
@@ -178,13 +176,7 @@ class OperatorAvailableTimesContents(BaseModel):
 OperatorAvailableTimesAPIResponse = APIResponse[OperatorAvailableTimesContents]
 
 
-# App API (call context / supplement prompt) Response Types
-
-
-class SupplementPromptResponse(BaseModel):
-    client_id: int
-    site_id: str
-    prompt_text: str
+# Context API (center info / FAQ) Response Types
 
 
 class CallContext(BaseModel):
@@ -211,8 +203,7 @@ class MessageSendResponse(BaseModel):
     message_id: str | None = Field(default=None, alias="messageId")
     message_type: str | None = Field(default=None, alias="messageType")  # SMS/LMS/MMS
     send_status: str | None = Field(default=None, alias="sendStatus")  # "SUCCESS"
-    aligo_message_id: int | None = Field(default=None, alias="aligoMessageId")
-    # ALIGO result code: 1 = success
+    # SMS gateway result code: 1 = success
     result_code: int | None = Field(default=None, alias="resultCode")
     result_message: str | None = Field(default=None, alias="resultMessage")
     send_date_time: str | None = Field(default=None, alias="sendDateTime")

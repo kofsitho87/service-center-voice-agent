@@ -27,8 +27,6 @@ CREATE TABLE IF NOT EXISTS services (
     service_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     keywords_json TEXT NOT NULL,
-    allow_new INTEGER NOT NULL,
-    allow_revisit INTEGER NOT NULL,
     sort INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS operators (
@@ -178,13 +176,11 @@ def _seed_once(conn: sqlite3.Connection) -> None:
             return
         for sort, dept in enumerate(catalog["services"]):
             conn.execute(
-                "INSERT INTO services VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO services VALUES (?, ?, ?, ?)",
                 (
                     dept["service_id"],
                     dept["name"],
                     json.dumps(dept.get("keywords", []), ensure_ascii=False),
-                    int("NEW" in dept.get("allow", ["NEW", "REVISIT"])),
-                    int("REVISIT" in dept.get("allow", ["NEW", "REVISIT"])),
                     sort,
                 ),
             )
@@ -247,13 +243,8 @@ def _seed_once(conn: sqlite3.Connection) -> None:
 # ------------------------------------------------------------------ reference
 
 
-def list_services(
-    conn: sqlite3.Connection, setting: str | None
-) -> list[dict[str, Any]]:
-    column = "allow_revisit" if setting == "ALLOW_ONLY_REVISIT" else "allow_new"
-    rows = conn.execute(
-        f"SELECT * FROM services WHERE {column} = 1 ORDER BY sort"
-    ).fetchall()
+def list_services(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    rows = conn.execute("SELECT * FROM services ORDER BY sort").fetchall()
     result = []
     for row in rows:
         count = conn.execute(
@@ -462,8 +453,6 @@ def confirmed_appointments(
                 "memo": row["memo"],
                 "appointmentDetail": row["service_name"],
                 "reservationRecordId": row["reservation_record_id"],
-                "todayModifiable": True,
-                "todayCancellable": True,
             }
         )
     return result

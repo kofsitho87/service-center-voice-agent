@@ -7,7 +7,6 @@ from agents.base_agent import BOOKING_MUTATION_ACTION_KEYS, BaseAgent
 from data import (
     BookingAgentActionConfig,
     CallSessionData,
-    InfoAgentActionConfig,
     RunContext_T,
 )
 from tasks.transfer_reason_task import TransferPurpose
@@ -19,7 +18,7 @@ ActionMode = Literal["auto", "transfer", "leave_memo"]
 
 # 라우팅 이벤트 계측. auto 가 아닌 모드는 툴 본문 대신 후속 태스크로 넘어가므로
 # 업무 시도를 '접수 후 인계' 로 명시적으로 닫는다. status 없이 mode 만 남기면
-# 분석기가 시도를 열어만 두고 닫지 못해 본인확인 이탈로 오분류한다(통화 107937).
+# 분석기가 시도를 열어만 두고 닫지 못해 본인확인 이탈로 오분류한다.
 # mode 는 레거시 분류기(booking_create_incomplete)가 읽으므로 유지한다.
 ACTION_ROUTE_STATUS = "EXITED"
 ACTION_ROUTE_DETAILS: dict[str, dict[str, str]] = {
@@ -30,7 +29,7 @@ ACTION_ROUTE_DETAILS: dict[str, dict[str, str]] = {
 
 def get_action_mode(
     call_session_data: CallSessionData,
-    agent_name: Literal["booking_agent", "info_agent"],
+    agent_name: Literal["booking_agent"],
     action_key: str,
 ) -> ActionMode:
     """
@@ -39,7 +38,7 @@ def get_action_mode(
     Args:
         call_session_data: 현재 세션 데이터
         agent_name: 에이전트 이름 (예: "booking_agent")
-        action_key: 액션 키 (예: "booking_create", "booking_modify", "booking_cancel", "booking_inquiry", "introduction", "visit_guide", "advisor_guide", "service_guide", "certificate", "events")
+        action_key: 액션 키 (예: "booking_create", "booking_modify", "booking_cancel", "booking_inquiry")
 
     Returns:
         ActionMode: "auto" | "transfer" | "leave_memo"
@@ -50,17 +49,13 @@ def get_action_mode(
         agent_config: BookingAgentActionConfig = agents_config.booking_agent
         mode = getattr(agent_config, action_key, "auto")
         return mode
-    elif agent_name == "info_agent":
-        agent_config: InfoAgentActionConfig = agents_config.info_agent
-        mode = getattr(agent_config, action_key, "auto")
-        return mode
 
     # 기본값: auto
     return "auto"
 
 
 def action_mode_handler(
-    action_key: str, agent_name: Literal["booking_agent", "info_agent"]
+    action_key: str, agent_name: Literal["booking_agent"]
 ):
     """
     Tool 함수에 액션 모드 분기 로직을 적용하는 데코레이터.
@@ -71,7 +66,7 @@ def action_mode_handler(
     - "leave_memo": 상담 요청 남기기 (_handle_leave_message)
 
     Args:
-        action_key: 액션 키 (예: "booking_create", "booking_modify", "booking_cancel", "booking_inquiry", "introduction", "visit_guide", "advisor_guide", "service_guide", "certificate", "events")
+        action_key: 액션 키 (예: "booking_create", "booking_modify", "booking_cancel", "booking_inquiry")
         agent_name: 에이전트 이름 (기본값: "booking_agent")
 
     Usage:

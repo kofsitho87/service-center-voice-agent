@@ -1,6 +1,4 @@
-from datetime import datetime
 from typing import Any, Literal
-from zoneinfo import ZoneInfo
 
 from livekit.agents import (
     function_tool,
@@ -37,8 +35,6 @@ from utils.common import normalize_verification_code
 from utils.i18n import t
 from utils.spoken_datetime import spoken_datetime as _format_spoken_datetime
 from utils.tool_responses import NO_APPOINTMENT_INFO
-
-KST = ZoneInfo("Asia/Seoul")
 
 RESERVATION_FAILURE_NO_RESERVATIONS = "no_reservations"
 RESERVATION_FAILURE_OPERATOR_MISSING = "reservation_operator_missing"
@@ -349,89 +345,6 @@ def _is_operator_not_found_response(message: str | None) -> bool:
     return normalized in _OPERATOR_NOT_FOUND_MESSAGES
 
 
-def _parse_reservation_date(value: Any):
-    if not value:
-        return None
-
-    text = str(value).strip()
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
-        try:
-            return datetime.strptime(text, fmt).date()
-        except ValueError:
-            continue
-
-    try:
-        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-
-    if parsed.tzinfo is None:
-        return parsed.date()
-    return parsed.astimezone(KST).date()
-
-
-def _is_same_day_reservation(reservation: dict[str, Any]) -> bool:
-    reservation_date = _parse_reservation_date(reservation.get("appointment_date"))
-    return reservation_date == datetime.now(KST).date()
-
-
-async def _handle_same_day_reservation_policy(
-    ctx: RunContext_T,
-    *,
-    action_key: str,
-    selected_reservation: dict[str, Any],
-) -> bool:
-    call_session_data = ctx.userdata
-    booking_flow_config = call_session_data.workflow_config.booking
-    booking_config, message_key = {
-        "booking_modify": (
-            booking_flow_config.booking_modify,
-            "booking.same_day_modify_not_allowed",
-        ),
-        "booking_cancel": (
-            booking_flow_config.booking_cancel,
-            "booking.same_day_cancel_not_allowed",
-        ),
-    }[action_key]
-
-    if booking_config.allow_same_day_reservation:
-        return False
-
-    if not _is_same_day_reservation(selected_reservation):
-        return False
-
-    logger.bind(
-        event=action_key.upper(),
-        stage="same_day_reservation_not_allowed",
-        phone=call_session_data.recipient_data.phone,
-        room_name=call_session_data.room_name,
-        reservation_id=selected_reservation.get("reservation_id"),
-        appointment_date=selected_reservation.get("appointment_date"),
-    ).info("Same-day reservation policy blocked automatic handling")
-
-    ctx.session.history.add_message(
-        role="developer",
-        content="",
-        extra=agent_event_extra(
-            action_key.upper(),
-            status="ESCALATED",
-            details={"reason": "same_day_reservation_not_allowed"},
-        ),
-    )
-
-    ctx.session.input.set_audio_enabled(False)
-    await _announce_and_shutdown_call(
-        ctx,
-        instructions=t(
-            message_key,
-            ctx.userdata.call_config_data.language,
-        ),
-        log_event=action_key.upper(),
-        phone=call_session_data.recipient_data.phone,
-    )
-    return True
-
-
 @function_tool()
 @action_mode_handler(action_key="booking_inquiry", agent_name="booking_agent")
 async def get_my_appointment_list(ctx: RunContext_T) -> list[str] | str:
@@ -456,7 +369,7 @@ async def get_my_appointment_list(ctx: RunContext_T) -> list[str] | str:
     userdata = ctx.userdata
 
     # 예약조회 시도의 분모. 이 이벤트가 없으면 성공 건만 관측되어
-    # 전환율을 계산할 수 없다(설계 문서 §6.2 P0-C).
+    # 전환율을 계산할 수 없다.
     ctx.session.history.add_message(
         role="developer",
         content="",
@@ -618,13 +531,6 @@ async def modify_appointment(ctx: RunContext_T) -> None:
         operator_id=selected_reservation.get("operator_id"),
     ).debug("Selected reservation")
 
-    if await _handle_same_day_reservation_policy(
-        ctx,
-        action_key="booking_modify",
-        selected_reservation=selected_reservation,
-    ):
-        return None
-
     # Step 3: 새로운 날짜/시간 선택
     operator_id = selected_reservation.get("operator_id")
     if not operator_id:
@@ -697,7 +603,7 @@ async def modify_appointment(ctx: RunContext_T) -> None:
     userdata.reservation_info = {
         "type": "MODIFY_RESERVATION",
         "service_id": selected_reservation.get("service_id"),
-        "verification_code": normalize_verification_code(userdata.recipient_data.verification_code, separator="-"),
+        "verification_code": normalize_verification_code(userdata.recipient_data.verification_code),
         "operator_id": new_advisor_id,
         "reservation_request_date_time": new_appointment_datetime,
         "reservation_record_id": reservation_record_id,
@@ -846,13 +752,6 @@ async def cancel_appointment(ctx: RunContext_T) -> None:
         selected_reservation_id=selected_reservation.get("reservation_id"),
     ).debug("Selected reservation")
 
-    if await _handle_same_day_reservation_policy(
-        ctx,
-        action_key="booking_cancel",
-        selected_reservation=selected_reservation,
-    ):
-        return None
-
     # ! 오디오 입력 비활성화
     ctx.session.input.set_audio_enabled(False)
 
@@ -882,7 +781,7 @@ async def cancel_appointment(ctx: RunContext_T) -> None:
 
     userdata.reservation_info = {
         "type": "CANCEL_RESERVATION",
-        "verification_code": normalize_verification_code(userdata.recipient_data.verification_code, separator="-"),
+        "verification_code": normalize_verification_code(userdata.recipient_data.verification_code),
         "reservation_record_id": reservation_record_id,
         "previous_reservation_date_time": previous_reservation_date_time,
         "operator_id": operator_id,

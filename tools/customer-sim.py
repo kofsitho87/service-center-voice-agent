@@ -426,7 +426,6 @@ class Simulator:
         self,
         session: Session,
         agent_cmd: str,
-        away_timeout: int = 180,
         auto: bool = True,
         customer_model: str | None = None,
         raw_log: bool = False,
@@ -437,7 +436,6 @@ class Simulator:
     ):
         self.session = session
         self.agent_cmd = agent_cmd
-        self.away_timeout = away_timeout
         self.auto = auto
         scripted_replies = session.persona.get("scripted_replies")
         self.customer_model = customer_model or resolve_customer_model()
@@ -479,7 +477,7 @@ class Simulator:
         # 긴 로그 라인(예: 서비스 목록 안내)이 줄바꿈으로 쪼개지면 파서가 JSON을
         # 복원하지 못하므로 PTY 폭을 충분히 넓게 잡는다.
         fcntl.ioctl(slave_fd, termios.TIOCSWINSZ, struct.pack("HHHH", 50, 1000, 0, 0))
-        env = {**os.environ, "USER_AWAY_TIMEOUT": str(self.away_timeout)}
+        env = dict(os.environ)
         if fixture_api := os.getenv("SIM_RESERVATION_API_BASEURL"):
             # sim-suite의 scenario-local fixture는 .env의 예약 API보다 우선한다.
             env["RESERVATION_API_BASEURL"] = fixture_api
@@ -525,8 +523,8 @@ class Simulator:
         event = self.session.emit(type_, **fields)
         render(event)
         # 상담원 연결(transfer_call) 또는 LeaveMessageTask 진입은 통화의 실질
-        # 종료 지점이다. 이후 에이전트가 메모/종료 루프를 길게 도는 동안 침묵이
-        # 없어 away-timeout이 안 걸리므로, 검증 목적이라면 여기서 바로 끊는다.
+        # 종료 지점이다. 이후 에이전트가 메모/종료 루프를 길게 돌 수 있으므로,
+        # 검증 목적이라면 여기서 바로 끊는다.
         if self.stop_on_transfer and (
             (type_ == "tool" and fields.get("name") == "transfer_call")
             or (type_ == "handoff" and "LeaveMessageTask" in fields.get("text", ""))
@@ -774,12 +772,6 @@ def main():
         help="세션 저장 루트 디렉터리",
     )
     parser.add_argument(
-        "--away-timeout",
-        type=int,
-        default=180,
-        help="에이전트 응답지연 타임아웃 초 (USER_AWAY_TIMEOUT로 전달)",
-    )
-    parser.add_argument(
         "--dial-info-json",
         help="agent-cli-text.py에 전달할 dial_info JSON 경로 (DIAL_INFO_JSON로 전달)",
     )
@@ -833,7 +825,6 @@ def main():
     Simulator(
         session,
         args.agent_cmd,
-        away_timeout=args.away_timeout,
         auto=not args.no_auto,
         customer_model=customer_model,
         raw_log=args.raw_log,

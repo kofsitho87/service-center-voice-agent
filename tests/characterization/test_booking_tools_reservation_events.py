@@ -82,7 +82,7 @@ async def test_schedule_lookup_failure_skips_repeat_question():
     await _handoff_operator_schedule_lookup_failed(
         SimpleNamespace(session=session, userdata=userdata),
         selected_reservation={
-            "service_name": "내과",
+            "service_name": "휴대폰 점검",
             "operator_name": "홍길동",
             "appointment_date": "2026-09-30 09:00:00",
         },
@@ -127,7 +127,7 @@ async def test_operator_missing_handoff_preserves_event_and_routes_to_staff(
         action_key=action_key,
         event_name=event_name,
         selected_reservation={
-            "service_name": "내과",
+            "service_name": "휴대폰 점검",
             "appointment_date": "2026-09-14 09:20:00",
         },
     )

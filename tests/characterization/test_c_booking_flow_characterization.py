@@ -201,7 +201,7 @@ def _task_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
 
 def _userdata(
     *,
-    verification_code: str | None = "1990-01-01",
+    verification_code: str | None = "123456",
     client_id: int = 1,
     select_operator: bool = False,
     last_reservation: LastReservation | None = None,
@@ -215,7 +215,6 @@ def _userdata(
             phone="01000000101",
             verification_code=verification_code,
             customer_no="C-1",
-            customer_visit="REVISIT",
             last_reservation=last_reservation,
         ),
         call_config_data=CallConfigData(language="ko-KR"),
@@ -258,11 +257,11 @@ def _new_customer(h: Harness, *, rejections: int = 1) -> None:
     h.run_task("VerifyCustomerIdentityTask", VerifyCustomerResult(status="no_customer"))
     results = [GetDtmfResult(user_input="")]
     results += [
-        GetDtmfResult(user_input="900101", normalized_date="1990-01-01")
+        GetDtmfResult(user_input="123456", verification_code="123456")
         for _ in range(rejections)
     ]
     results.append(
-        GetDtmfResult(user_input="900101", normalized_date="1990-01-01", confirmed=True)
+        GetDtmfResult(user_input="123456", verification_code="123456", confirmed=True)
     )
     h.agent_task_sequence("GetVerificationCodeDtmfTask", results)
 
@@ -328,7 +327,7 @@ for _flow, _runner, _stop in (("dynamic", _dynamic, _reference_fails),):
             h.agent_task_sequence(
                 "GetVerificationCodeDtmfTask",
                 [
-                    GetDtmfResult(user_input="900101", normalized_date="1990-01-01")
+                    GetDtmfResult(user_input="123456", verification_code="123456")
                     for _ in range(3)
                 ],
             )
@@ -532,7 +531,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -616,7 +615,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -696,14 +695,14 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {
                     "type": "CANCEL_RESERVATION",
-                    "verification_code": "1990-01-01",
+                    "verification_code": "123456",
                     "reservation_record_id": "R-1",
                     "previous_reservation_date_time": "2030-01-09 10:00:00",
                     "operator_id": 77,
                     "service_id": 11,
                 },
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -821,7 +820,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -960,7 +959,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -1100,7 +1099,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -1183,7 +1182,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -1273,7 +1272,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -1368,7 +1367,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -1463,7 +1462,7 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 },
                 "reservation_info": {},
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],
@@ -1556,14 +1555,14 @@ SNAPSHOTS: dict[str, list[tuple]] = {
                 "reservation_info": {
                     "type": "MODIFY_RESERVATION",
                     "service_id": 11,
-                    "verification_code": "1990-01-01",
+                    "verification_code": "123456",
                     "operator_id": 77,
                     "reservation_request_date_time": "2030-01-07 15:00:00",
                     "reservation_record_id": "R-1",
                     "previous_reservation_date_time": "2030-01-09 10:00:00",
                 },
                 "reservation_data": {},
-                "recipient_verification_code": "1990-01-01",
+                "recipient_verification_code": "123456",
             },
         ),
     ],

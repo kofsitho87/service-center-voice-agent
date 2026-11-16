@@ -1,8 +1,8 @@
 """진입 인사말 분기 — 조회 지시가 붙는 경계 검증.
 
-통화 61402: DTMF 선택과 확인번호 확인만 거쳐 진입했는데(고객 발화는 확인 응답
-"네" 하나) 진입 턴에 search_schedules가 당일 조건으로 호출됐고, 빈 결과를
-"오늘 예약 가능한 시간이 없습니다"로 안내한 뒤 통화가 끊겼다. 반대로 고객이
+DTMF 선택과 확인번호 확인만 거쳐 진입하면(고객 발화는 확인 응답 "네" 하나)
+조회할 조건이 없다. 이때 진입 턴에 search_schedules가 당일 조건으로 호출되면
+빈 결과를 "오늘 예약 가능한 시간이 없습니다"로 안내하게 된다. 반대로 고객이
 "오늘 예약해주세요"라고 이미 말한 진입에서는 그 조회가 정상 동작이다.
 두 경우를 가르는 것은 코드가 세는 사실이므로 여기서 고정한다.
 """
@@ -28,7 +28,7 @@ def _chat_ctx(*items: SimpleNamespace) -> SimpleNamespace:
     return SimpleNamespace(items=list(items))
 
 
-# 통화 61402 진입 시점 chat_ctx (developer 이벤트는 content="" 라 copy 단계에서 빠진다)
+# DTMF 메뉴로만 진입한 시점의 chat_ctx (developer 이벤트는 content="" 라 copy 단계에서 빠진다)
 DTMF_ONLY_CTX = _chat_ctx(
     _message("assistant", "Example Device Care 입니다. 예약 신청은 1번을 눌러주세요."),
     _message("assistant", "예약 신청을 위해 본인 확인이 필요합니다."),

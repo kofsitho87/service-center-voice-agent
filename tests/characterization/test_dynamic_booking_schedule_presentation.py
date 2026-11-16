@@ -158,7 +158,7 @@ async def test_single_day_search_exposes_only_three_times_but_records_full_count
 @pytest.mark.asyncio
 async def test_available_appointments_only_use_slots_in_requested_time_window():
     task = _task()
-    task._services.append({"id": 3591, "name": "교정", "keywords": []})
+    task._services.append({"id": 3591, "name": "액정 교체", "keywords": []})
     task._advisors.append({"id": 806, "name": "이테스트", "service_ids": [3591]})
     task._advisors_by_id[806] = task._advisors[-1]
     task._last_search_conditions = {"service_id": 3591}

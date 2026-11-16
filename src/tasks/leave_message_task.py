@@ -23,12 +23,6 @@ _KNOWN_ACTION_KEYS = frozenset(
         "booking_modify",
         "booking_cancel",
         "booking_inquiry",
-        "introduction",
-        "visit_guide",
-        "advisor_guide",
-        "service_guide",
-        "certificate",
-        "events",
     }
 )
 
@@ -56,7 +50,7 @@ def _speak_timing_confirmation(ctx: RunContext_T, question: str) -> None:
     """확인 질문을 툴에서 직접 발화하고 LLM 후속 응답은 요청하지 않는다.
 
     툴 결과를 LLM이 읽게 두면 모델이 빈 응답을 내는 경우 통화가 무음으로
-    멈춘다(call 199292). 문구가 고정 템플릿이므로 결정론적으로 말한다.
+    멈춘다. 문구가 고정 템플릿이므로 결정론적으로 말한다.
     """
     ctx.session.say(question)
     return None

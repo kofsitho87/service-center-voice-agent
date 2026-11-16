@@ -110,7 +110,6 @@ async def _prepare_queued_warm_transfer_briefing(
     sip_identity: str,
     conversation_history: str,
     customer_name: str | None,
-    is_new_customer: bool,
     language_code: str | None,
     transfer_record: TransferRecord,
     on_ready: Callable[[str], Awaitable[None]],
@@ -120,7 +119,6 @@ async def _prepare_queued_warm_transfer_briefing(
         briefing_text = await generate_warm_transfer_briefing_text(
             conversation_history=conversation_history,
             customer_name=customer_name,
-            is_new_customer=is_new_customer,
             language_code=language_code,
         )
     except asyncio.CancelledError:
@@ -696,7 +694,7 @@ class BaseAgent(KoreanSpeechGuardMixin, Agent):
         participant_phone = call_session_data.recipient_data.phone
         sip_identity = call_session_data.recipient_data.sip_identity
 
-        # Warm transfer 진행 중 플래그 설정 (user_presence_task 중지)
+        # Warm transfer 진행 중 플래그 설정 (통화 상태 직렬화에 기록된다)
         call_session_data.is_warm_transferring = True
 
         if call_session_data.call_config_data.transfer_message:
@@ -965,7 +963,6 @@ class BaseAgent(KoreanSpeechGuardMixin, Agent):
                     "user_name": call_session_data.recipient_data.user_name,
                     "verification_code": call_session_data.recipient_data.verification_code,
                     "customer_no": call_session_data.recipient_data.customer_no,
-                    "customer_visit": (call_session_data.recipient_data.customer_visit),
                     "transfer_target_phone": transfer_to,
                     "briefing_text": "",
                 },
@@ -974,9 +971,6 @@ class BaseAgent(KoreanSpeechGuardMixin, Agent):
             queue_wait_started_at = time.monotonic()
 
             customer_name = call_session_data.recipient_data.user_name
-            is_new_customer = (
-                call_session_data.recipient_data.customer_visit != "REVISIT"
-            )
             # No-briefing mode: skip history extraction and LLM briefing so the
             # caller is bridged as soon as the agent answers.
             if briefing_enabled:
@@ -1005,7 +999,6 @@ class BaseAgent(KoreanSpeechGuardMixin, Agent):
                         sip_identity=sip_identity,
                         conversation_history=conversation_history,
                         customer_name=customer_name,
-                        is_new_customer=is_new_customer,
                         language_code=call_session_data.call_config_data.language,
                         transfer_record=call_session_data.transfer_record,
                         on_ready=_publish_queued_briefing,
@@ -1279,7 +1272,6 @@ class BaseAgent(KoreanSpeechGuardMixin, Agent):
                             caller_identity=sip_identity,
                             chat_ctx=self.chat_ctx if briefing_enabled else None,
                             customer_name=customer_name,
-                            is_new_customer=is_new_customer,
                             transfer_record=call_session_data.transfer_record,
                             transfer_start_time=transfer_start_time,
                             external_hold_music_player=hold_music_player,

@@ -70,8 +70,8 @@ def test_filter_time_constraints_stays_a_class_attribute():
 def _task(*, offers: bool = True) -> DynamicBookingTask:
     task = object.__new__(DynamicBookingTask)
     task._chat_ctx = llm.ChatContext()
-    task._services = [{"id": 10, "name": "Implant", "keywords": []}]
-    task._advisors = [{"id": 100, "name": "Provider", "service_ids": [10]}]
+    task._services = [{"id": 10, "name": "Screen Repair", "keywords": []}]
+    task._advisors = [{"id": 100, "name": "Advisor", "service_ids": [10]}]
     task._advisors_by_id = {100: task._advisors[0]}
     task._select_operator = False
     task._schedule_lookup_days = 30
@@ -204,7 +204,7 @@ async def test_record_caller_evidence_rejects_missing_or_ungrounded_quote(quote)
         (None, "staff_connection", None),
         (None, "no_slot_memo", None),
         (
-            ServiceScopeBlocker(subject="service", requested_label="틀니"),
+            ServiceScopeBlocker(subject="service", requested_label="드론 수리"),
             "service_not_offered",
             None,
         ),
@@ -302,7 +302,6 @@ def _full_page_task():
     task = _task(offers=False)
     task._day_rows_cache = {}
     task._date_rows_cache = {}
-    task._service_reservation_setting = "ALLOW_ONLY_NEW"
     task._pending_earliest_offer = None
     task._call_session_data.business_data = SimpleNamespace(site_id="s", client_id=1)
     return task

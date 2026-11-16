@@ -552,11 +552,6 @@ async def test_modify_appointment_waits_for_operator_task_and_routes_lookup_fail
             return_value=SimpleNamespace(exited=False, selected_reservation=selected)
         ),
     )
-    monkeypatch.setattr(
-        booking_tools,
-        "_handle_same_day_reservation_policy",
-        AsyncMock(return_value=False),
-    )
     task = AsyncMock(
         return_value=SimpleNamespace(
             lookup_failed=True,

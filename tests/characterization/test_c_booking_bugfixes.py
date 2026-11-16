@@ -21,7 +21,7 @@ from tools.booking_tools import (
 
 _RESERVATION = {
     "reservation_id": "R-1",
-    "service_name": "내과",
+    "service_name": "휴대폰 점검",
     "operator_name": "홍길동",
     "appointment_date": "2030-01-09 10:00:00",
 }
@@ -139,7 +139,7 @@ def _patch_lookup(monkeypatch, *, verify=None, dtmf=None):
 async def test_reservation_lookup_reports_known_identity(monkeypatch):
     _patch_lookup(monkeypatch)
 
-    result = await GetMyReservationsTask(_reservations_userdata("1990-01-01")).run()
+    result = await GetMyReservationsTask(_reservations_userdata("123456")).run()
 
     assert result.status == "completed"
     assert result.identity_source == "known"
@@ -150,7 +150,7 @@ async def test_reservation_lookup_reports_verified_identity(monkeypatch):
     userdata = _reservations_userdata(None)
 
     def matched():
-        userdata.recipient_data.verification_code = "1985-05-05"
+        userdata.recipient_data.verification_code = "246810"
         return VerifyCustomerResult(status="matched")
 
     _patch_lookup(monkeypatch, verify=matched)
@@ -167,7 +167,7 @@ async def test_reservation_lookup_reports_new_customer_identity(monkeypatch):
         monkeypatch,
         verify=lambda: VerifyCustomerResult(status="no_customer"),
         dtmf=GetDtmfResult(
-            user_input="900101", normalized_date="1990-01-01", confirmed=True
+            user_input="123456", verification_code="123456", confirmed=True
         ),
     )
 
@@ -185,7 +185,7 @@ async def test_reservation_api_failure_keeps_identity_source(monkeypatch):
         AsyncMock(return_value=SimpleNamespace(success=False, data=None, message="x")),
     )
 
-    result = await GetMyReservationsTask(_reservations_userdata("1990-01-01")).run()
+    result = await GetMyReservationsTask(_reservations_userdata("123456")).run()
 
     assert result.status == "error"
     assert result.identity_source == "known"
@@ -203,7 +203,7 @@ def test_identity_outcome_event_uses_reported_source(identity_source, expected):
                 add_message=lambda role, content, extra: events.append(extra)
             )
         ),
-        userdata=SimpleNamespace(recipient_data=SimpleNamespace(verification_code="19900101")),
+        userdata=SimpleNamespace(recipient_data=SimpleNamespace(verification_code="123456")),
     )
 
     _record_identity_outcome(

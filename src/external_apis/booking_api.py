@@ -52,19 +52,8 @@ def _normalize_api_response(raw: dict[str, Any]) -> dict[str, Any]:
 # Defaults to the in-process fake backend; other hosts are blocked.
 RESERVATION_API_BASEURL = os.getenv("RESERVATION_API_BASEURL", FAKE_RESERVATION_BASEURL)
 
-ServiceReservationSetting = Literal[
-    "ALLOW_ONLY_NEW",
-    "ALLOW_ONLY_REVISIT",
-]
-
-# 특정 고객사(client_id)는 기본 RESERVATION_API_BASEURL 대신 별도의 예약 API 서버를 사용한다.
-_CLIENT_BASEURL_OVERRIDES: dict[int, str] = {}  # no overrides configured
-
-
-def _resolve_base_url(client_id: int | None = None) -> str | None:
-    """client_id에 매핑된 전용 base URL이 있으면 반환하고, 없으면 기본값을 사용한다."""
-    if client_id is not None and client_id in _CLIENT_BASEURL_OVERRIDES:
-        return _CLIENT_BASEURL_OVERRIDES[client_id]
+def _base_url() -> str | None:
+    """Read at call time so tests and env overrides take effect."""
     return RESERVATION_API_BASEURL
 
 
@@ -163,7 +152,7 @@ async def get_operators(
     """
     return await _get_reservation_api(
         "GET_OPERATORS",
-        f"{_resolve_base_url(client_id)}/reservation/{service_id}",
+        f"{_base_url()}/reservation/{service_id}",
         OperatorAPIResponse,
         http_error_message="상담사 조회 중 오류가 발생했습니다.",
         unexpected_message="예약 조회 중 예상치 못한 오류가 발생했습니다.",
@@ -172,15 +161,13 @@ async def get_operators(
 
 async def get_site_operators(
     site_id: str | int,
-    service_reservation_setting: ServiceReservationSetting,
     client_id: int | None = None,
 ) -> OperatorAPIResponse:
     """사이트에 등록된 상담사 목록을 조회합니다."""
     return await _get_reservation_api(
         "GET_SITE_OPERATORS",
-        f"{_resolve_base_url(client_id)}/reservation/{site_id}/operators",
+        f"{_base_url()}/reservation/{site_id}/operators",
         OperatorAPIResponse,
-        params={"serviceReservationSetting": service_reservation_setting},
         http_error_message="상담사 조회 중 오류가 발생했습니다.",
         unexpected_message="상담사 조회 중 예상치 못한 오류가 발생했습니다.",
     )
@@ -205,7 +192,7 @@ async def get_operator_available_times(
     """
     return await _get_reservation_api(
         "GET_OPERATOR_AVAILABLE_TIMES",
-        f"{_resolve_base_url(client_id)}/reservation/operators/{operator_id}/schedules/available",
+        f"{_base_url()}/reservation/operators/{operator_id}/schedules/available",
         OperatorAvailableTimesAPIResponse,
         params={
             "startDate": start_date,
@@ -222,7 +209,6 @@ async def get_site_available_schedules(
     site_id: str,
     start_date: str,
     end_date: str,
-    service_reservation_setting: ServiceReservationSetting,
     schedule_type: Literal["DATE", "DATE_TIME"] = "DATE",
     size: int = 10,
     operator_id: int | None = None,
@@ -234,7 +220,6 @@ async def get_site_available_schedules(
         "site_id": site_id,
         "start_date": start_date,
         "end_date": end_date,
-        "service_reservation_setting": service_reservation_setting,
         "schedule_type": schedule_type,
         "size": size,
         "operator_id": operator_id,
@@ -246,7 +231,6 @@ async def get_site_available_schedules(
         "endDate": end_date,
         "type": schedule_type,
         "size": size,
-        "serviceReservationSetting": service_reservation_setting,
     }
     if operator_id is not None:
         params["operatorId"] = operator_id
@@ -271,7 +255,7 @@ async def get_site_available_schedules(
 
     return await _get_reservation_api(
         "GET_SITE_AVAILABLE_SCHEDULES",
-        f"{_resolve_base_url(client_id)}/reservation/{site_id}/schedules/available",
+        f"{_base_url()}/reservation/{site_id}/schedules/available",
         SiteAvailableSchedulesAPIResponse,
         params=params,
         build=build,
@@ -284,7 +268,6 @@ async def get_site_available_schedules(
 
 async def get_services(
     site_id: str,
-    service_reservation_setting: ServiceReservationSetting,
     client_id: int | None = None,
 ) -> ServiceAPIResponse:
     """
@@ -292,10 +275,8 @@ async def get_services(
     """
     return await _get_reservation_api(
         "GET_SERVICES",
-        f"{_resolve_base_url(client_id)}/reservation/{site_id}/services",
+        f"{_base_url()}/reservation/{site_id}/services",
         ServiceAPIResponse,
-        # ALLOW_ONLY_NEW, ALLOW_ONLY_REVISIT
-        params={"serviceReservationSetting": service_reservation_setting},
         http_error_message="서비스 조회 중 오류가 발생했습니다.",
         unexpected_message="예약 조회 중 예상치 못한 오류가 발생했습니다.",
     )
@@ -384,7 +365,7 @@ async def get_available_schedules(
 
     return await _get_reservation_api(
         "GET_AVAILABLE_SCHEDULES",
-        f"{_resolve_base_url(client_id)}/reservation/services/{service_id}/schedules/available",
+        f"{_base_url()}/reservation/services/{service_id}/schedules/available",
         AvailableSchedulesAPIResponse,
         params=_build_available_schedule_params(start_date, end_date, operator_id),
         build=build,
@@ -420,7 +401,7 @@ async def get_confirmed_appointments(
 
     return await _get_reservation_api(
         "GET_CONFIRMED_APPOINTMENTS",
-        f"{_resolve_base_url(client_id)}/record/{request.site_id}/appointment/confirm",
+        f"{_base_url()}/record/{request.site_id}/appointment/confirm",
         ConfirmedAppointmentsAPIResponse,
         params=params,
         client_options={"timeout": 3.0},
@@ -462,7 +443,7 @@ async def get_customer_by_phone(
     """
     return await _get_reservation_api(
         "GET_CUSTOMER_BY_PHONE",
-        f"{_resolve_base_url(client_id)}/record/v2/{request.site_id}/customer",
+        f"{_base_url()}/record/v2/{request.site_id}/customer",
         CustomerAPIResponse,
         params={
             "guardianFallback": "true",
@@ -511,7 +492,7 @@ async def submit_reservation(
     try:
         async with await create_async_http_client(timeout=5.0) as client:
             response = await client.post(
-                f"{_resolve_base_url(client_id)}/reservation/{site_id}/requests",
+                f"{_base_url()}/reservation/{site_id}/requests",
                 headers={"Idempotency-Key": idempotency_key},
                 json=payload,
             )

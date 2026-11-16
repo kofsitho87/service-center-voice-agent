@@ -57,7 +57,6 @@ async def test_queued_briefing_is_published_for_every_fifo_entry(monkeypatch):
                 sip_identity=sip_identity,
                 conversation_history=sip_identity,
                 customer_name=None,
-                is_new_customer=True,
                 language_code="ko",
                 transfer_record=records[sip_identity],
                 on_ready=_on_ready,

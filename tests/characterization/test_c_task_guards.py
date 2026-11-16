@@ -6,10 +6,7 @@ from unittest.mock import Mock
 import pytest
 
 from tasks.booking.select_reservation_task import SelectReservationTask
-from tasks.dtmf_verification_code_task import (
-    _is_valid_verification_code,
-    _parse_verification_code,
-)
+from tasks.dtmf_verification_code_task import _is_valid_verification_code
 
 _RESERVATIONS = [
     {"reservation_id": "R1", "appointment_date": "2030-01-07 09:00:00"},
@@ -58,20 +55,11 @@ async def test_select_and_confirm_after_exit_are_ignored(monkeypatch):
     assert result.exit_reason_code == "cancel"
 
 
-@pytest.mark.parametrize(
-    ("digits", "expected"),
-    [
-        ("291231", (2029, 12, 31, "2029-12-31")),
-        ("300101", (1930, 1, 1, "1930-01-01")),
-        ("000229", (2000, 2, 29, "2000-02-29")),
-        ("991105", (1999, 11, 5, "1999-11-05")),
-    ],
-)
-def test_parse_verification_code_two_digit_year_pivot(digits, expected):
-    assert _parse_verification_code(digits) == expected
+@pytest.mark.parametrize("digits", ["000101", "000202", "123456", "999999"])
+def test_any_six_digit_verification_code_is_accepted(digits):
     assert _is_valid_verification_code(digits) is True
 
 
-@pytest.mark.parametrize("digits", ["990230", "011301", "12345", "1234567", "12a456"])
+@pytest.mark.parametrize("digits", ["", "12345", "1234567", "12a456", "12 456"])
 def test_invalid_verification_code_digits_are_rejected(digits):
     assert _is_valid_verification_code(digits) is False

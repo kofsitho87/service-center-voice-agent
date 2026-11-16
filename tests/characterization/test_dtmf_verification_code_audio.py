@@ -88,7 +88,7 @@ async def test_six_repeated_digits_confirm_once_and_stop_audio_before_voice(sour
             )
         await settle()
         assert task._confirming
-        assert task._collected_result.normalized_date == "2000-11-22"
+        assert task._collected_result.verification_code == "001122"
         task.update_instructions.assert_awaited_once()
         assert session.say.call_count == 2
         assert session.say.call_args.kwargs["allow_interruptions"] is False
@@ -123,7 +123,7 @@ async def test_auto_both_sources_repeated_digits_are_one_to_one(first):
                 task._on_audio_digit(digit)
                 sip(room, digit)
         await settle()
-        assert task._collected_result.normalized_date == "2000-11-22"
+        assert task._collected_result.verification_code == "001122"
         assert session.say.call_count == 2
         assert not task._arbiter.has_pending
 
@@ -147,14 +147,14 @@ async def test_auto_mixed_sources_keep_digit_order_and_ignore_other_participants
         for digit in "1122":
             sip(room, digit)
         await settle()
-        assert task._collected_result.normalized_date == "2001-11-22"
+        assert task._collected_result.verification_code == "011122"
         assert session.say.call_count == 2
 
 
 @pytest.mark.asyncio
 async def test_invalid_and_incomplete_clear_inputs_before_retry():
     async with verification_code_task(dtmf_input_timeout=0.01) as (task, room, session):
-        for digit in "001332":
+        for digit in "0011*2":  # a non-digit key is rejected
             sip(room, digit)
         await settle()
         assert not task._confirming
@@ -172,7 +172,7 @@ async def test_invalid_and_incomplete_clear_inputs_before_retry():
             sip(room, digit)
         await settle()
         assert task._confirming
-        assert task._collected_result.normalized_date == "2000-11-22"
+        assert task._collected_result.verification_code == "001122"
 
 
 @pytest.mark.asyncio
@@ -192,7 +192,7 @@ async def test_pending_last_audio_digit_survives_per_digit_timeout():
         clock[0] = 0.9
         task._arbiter._deliver_due()
         await settle()
-        assert task._collected_result.normalized_date == "2000-11-22"
+        assert task._collected_result.verification_code == "001122"
         assert session.say.call_count == 2
 
 

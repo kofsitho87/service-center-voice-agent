@@ -9,7 +9,7 @@ import httpx
 import pytest
 
 from agents import base_agent
-from external_apis import fastapi_app_api
+from external_apis import context_api
 from fake_backend import transport as fake_transport_module
 from fake_backend.transport import FakeBackendTransport
 from services import trunk_allocation_client
@@ -193,10 +193,10 @@ async def test_call_context_uses_off_loop_factory_and_preserves_api_behavior(
             **options, transport=mock_transport
         )
 
-    monkeypatch.setattr(fastapi_app_api, "FAQ_API_BASEURL", "https://api.test")
-    monkeypatch.setattr(fastapi_app_api, "create_async_http_client", factory)
-    monkeypatch.setattr(fastapi_app_api, "log_api_response", Mock())
-    response = await fastapi_app_api.get_call_context(42)
+    monkeypatch.setattr(context_api, "FAQ_API_BASEURL", "https://api.test")
+    monkeypatch.setattr(context_api, "create_async_http_client", factory)
+    monkeypatch.setattr(context_api, "log_api_response", Mock())
+    response = await context_api.get_call_context(42)
     assert response.data.id == "test-context"
     assert response.data.client_id == 42
     assert len(requests) == 1

@@ -100,7 +100,6 @@ def _task(*, offers: bool = False, select_operator: bool = False):
     task._pending_earliest_offer = None
     task._day_rows_cache = {}
     task._date_rows_cache = {}
-    task._service_reservation_setting = "ALLOW_ONLY_NEW"
     task._mutation_lock = asyncio.Lock()
     task.complete = Mock()
     task._call_session_data = SimpleNamespace(

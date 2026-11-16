@@ -14,7 +14,6 @@ from loguru import logger
 
 from data import CallSessionData
 from external_apis.booking_api import (
-    ServiceReservationSetting,
     get_services,
     get_site_operators,
 )
@@ -32,7 +31,6 @@ class BookingReference:
 
     services: list[dict[str, Any]]
     advisors: list[dict[str, Any]]
-    service_reservation_setting: ServiceReservationSetting
 
 
 def is_operator_selection_enabled(call_session_data: CallSessionData) -> bool:
@@ -66,7 +64,7 @@ def advisor_is_eligible(
 def filter_bookable_services(
     services: list[dict[str, Any]], advisors: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    """커버 상담사 0명인 서비스 제외 — 예약 불가 서비스 원천 차단. [D8]"""
+    """커버 상담사 0명인 서비스 제외 — 예약 불가 서비스 원천 차단."""
     covered: set[int] = set()
     for advisor in advisors:
         covered |= advisor_service_ids(advisor)
@@ -118,21 +116,9 @@ async def load_booking_reference(
     """
     site_id = call_session_data.business_data.site_id
     client_id = call_session_data.business_data.client_id
-    is_new_customer = call_session_data.recipient_data.customer_visit in ["NEW", "FAIL"]
-    service_reservation_setting: ServiceReservationSetting = (
-        "ALLOW_ONLY_NEW" if is_new_customer else "ALLOW_ONLY_REVISIT"
-    )
     services_response, operators_response = await asyncio.gather(
-        get_services(
-            site_id,
-            service_reservation_setting=service_reservation_setting,
-            client_id=client_id,
-        ),
-        get_site_operators(
-            site_id,
-            service_reservation_setting=service_reservation_setting,
-            client_id=client_id,
-        ),
+        get_services(site_id, client_id=client_id),
+        get_site_operators(site_id, client_id=client_id),
     )
     record_api_result(history, "GET_SERVICES", services_response)
     record_api_result(history, "GET_SITE_OPERATORS", operators_response)
@@ -177,8 +163,4 @@ async def load_booking_reference(
         len(services),
         len(advisors),
     )
-    return BookingReference(
-        services=services,
-        advisors=advisors,
-        service_reservation_setting=service_reservation_setting,
-    )
+    return BookingReference(services=services, advisors=advisors)

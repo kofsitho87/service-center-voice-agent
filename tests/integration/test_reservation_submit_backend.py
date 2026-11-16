@@ -52,7 +52,6 @@ async def test_new_booking_is_saved_once_and_leaves_availability():
         SITE,
         "2026-11-17",
         "2026-11-17",
-        "ALLOW_ONLY_REVISIT",
         schedule_type="DATE_TIME",
         size=100,
     )
@@ -164,7 +163,7 @@ async def test_submit_faults_never_raise(monkeypatch):
 async def test_concurrent_first_requests_seed_the_database_once():
     """Regression: concurrent first connections used to double-insert seed rows."""
     results = await asyncio.gather(
-        *(booking_api.get_services(SITE, "ALLOW_ONLY_NEW") for _ in range(8))
+        *(booking_api.get_services(SITE) for _ in range(8))
     )
     assert all(r.success for r in results)
     with store.connection() as conn:

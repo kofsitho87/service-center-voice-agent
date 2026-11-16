@@ -8,7 +8,7 @@ flowchart TD
     SESSION --> SINGLE[SingleAgent extends BaseAgent]
     SINGLE -->|flow_config nodes| FLOW[greeting / DTMF menu / agent / action / exit]
     SINGLE -->|tools| TOOLS[create / lookup / modify / cancel / transfer / end]
-    TOOLS --> TASKS[DynamicBookingTask, SelectReservation, OperatorScheduleSelection, LeaveMessage, WarmTransfer]
+    TOOLS --> TASKS["Tasks<br/>DynamicBookingTask (new booking)<br/>SelectReservationTask (pick booking)<br/>OperatorScheduleSelectionTask (new time)<br/>LeaveMessageTask · WarmTransferTask"]
     TASKS --> CLIENTS[external_apis clients: booking, SMS, context; trunk client]
     TOOLS -->|write at completion| SUBMIT[reservation_submit]
     SUBMIT --> CLIENTS

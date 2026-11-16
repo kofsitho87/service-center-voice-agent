@@ -21,8 +21,8 @@ FIXED_NOW = dt.datetime(2026, 9, 11, 9, 0, tzinfo=ZoneInfo("Asia/Seoul"))
 def task(monkeypatch):
     task = object.__new__(DynamicBookingTask)
     task._select_operator = False
-    task._services = [{"id": 10, "name": "Checkup", "keywords": []}]
-    task._advisors = [{"id": 100, "name": "Provider", "service_ids": [10]}]
+    task._services = [{"id": 10, "name": "Inspection", "keywords": []}]
+    task._advisors = [{"id": 100, "name": "Advisor", "service_ids": [10]}]
     task._advisors_by_id = {100: task._advisors[0]}
     task._schedule_lookup_days = 30
     task._staged = None

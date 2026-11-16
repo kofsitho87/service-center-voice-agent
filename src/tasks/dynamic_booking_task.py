@@ -1,13 +1,9 @@
 """다이나믹 예약 접수 태스크 — 경계 하네스 설계.
 
 대화는 LLM 소유, 코드는 사실(주입·조회)과 트랜잭션(스테이징·커밋)만 소유한다.
-주석의 [D1]~[D15] 표기는 삭제된 설계 문서의 결정 항목이다:
-`git show 0a1af1e^:docs/dynamic-booking-agent3-claude/2026-07-15-v3-design.md`.
 
-진입점은 두 곳:
-- SingleAgent용 툴 tools/dynamic_booking_tools.py (create_new_appointment)
-- 실험 셸 agents/dynamic_booking_agent.py (agent-cli 의 dynamic_booking_agent)
-로그는 event="DYNAMIC_BOOKING_TASK".
+진입점은 SingleAgent용 툴 tools/dynamic_booking_tools.py
+(create_new_appointment)다. 로그는 event="DYNAMIC_BOOKING_TASK".
 
 순수 헬퍼는 tasks/booking/dynamic_*.py 에 있고 이 모듈이 다시 내보낸다.
 now_kst()·get_site_available_schedules 를 부르는 코드는 테스트가 이 모듈
@@ -149,33 +145,30 @@ from utils.i18n import t
 from utils.korean_speech_guard import guard_korean_speech
 
 KST = ZoneInfo("Asia/Seoul")
-SLOT_PAGE_SIZE = 100  # 응답 완전성 단정의 근거 [D4]
+SLOT_PAGE_SIZE = 100  # 응답 완전성 단정의 근거
 SCHEDULE_FETCH_CONCURRENCY = 5  # 범위 검증 시 일정 조회 동시성 상한
 TIME_FILTER_SEARCH_DAYS = 7  # Return a bounded result before extending the search.
 NEARBY_SLOT_WINDOW_MINUTES = 180
 # No-slot help is offered after the caller declined this many alternatives
 # (rejected candidates and re-searches after a no-match result). Exceptions that
 # offer at once: a fixed date/time/advisor (report_booking_obstacle) and an empty
-# search through the booking horizon. Plan:
-# docs/plans/2026-09-29-booking-handoff-final-plan.md (revision v3).
+# search through the booking horizon.
 DECLINED_ALTERNATIVES_BEFORE_OFFER = 3
-TODAY_LEAD_MINUTES = 0  # 오늘 검색 시 now+lead 이전 슬롯 제외 [D10]
-# 무진행(no-progress) 가드 임계값 — 실통화 2026-08-28(42분·336턴) 재발 방지.
+TODAY_LEAD_MINUTES = 0  # 오늘 검색 시 now+lead 이전 슬롯 제외
+# 무진행(no-progress) 가드 임계값.
 #
-# 그 통화에서 사용자 발화는 저신뢰 추임새와 무관한 제3자 대화 조각뿐이었고
-# booking 툴은 한 번도 호출되지 않았다. 프롬프트 규칙(반복 금지·되묻기)도
-# exit_task 도 발동하지 않았으며, 무음 워치독(USER_RESPONSE_DELAY)은 저신뢰
-# 발화가 타이머를 리셋해 42분 뒤에야 동작했다. 발동이 보장되어야 하는
-# 안전장치이므로 카운팅과 개입은 프롬프트가 아니라 코드가 소유한다.
+# 사용자 발화가 저신뢰 추임새나 무관한 주변 대화 조각뿐이면 booking 툴이 한 번도
+# 호출되지 않은 채 통화가 끝없이 이어질 수 있다. 프롬프트 규칙(반복 금지·
+# 되묻기)이나 exit_task 는 이런 상황에서 발동이 보장되지 않는다. 발동이
+# 보장되어야 하는 안전장치이므로 카운팅과 개입은 프롬프트가 아니라 코드가 소유한다.
 #
 # 연속 무진행 턴 수는 사용자 턴마다 1씩 늘고, booking 툴 호출(조회·스테이징·
 # 커밋 시도)마다 0으로 리셋된다.
 #
-# 초기값 5/10 은 실통화 테스트(2026-08-31)에서 오탐 종료를 냈다 — 정상 예약
-# 협의도 서비스 항목 선택이나 달력 블록 기반 날짜 문답("11월 되나요?",
-# "언제까지 되는데?")처럼 툴 없이 답하는 구간이 이어지면 10턴을 채운다.
-# 그 통화는 "오전이요"까지 순조롭게 진행 중이었는데 종료됐다. 병리적
-# 통화(2026-08-28)는 336턴이었으므로 20/30 도 충분히 이르게 끊는다.
+# 임계값을 5/10 처럼 낮게 잡으면 오탐 종료가 난다 — 정상 예약 협의도 서비스
+# 항목 선택이나 달력 블록 기반 날짜 문답("11월 되나요?", "언제까지 되는데?")처럼
+# 툴 없이 답하는 구간이 이어지면 10턴을 쉽게 채운다. 병리적인 통화는 수백 턴까지
+# 이어지므로 20/30 도 충분히 이르게 끊는다.
 NO_PROGRESS_SOFT_TURNS = 20  # 예/아니오 강제 질문 지시문 주입
 NO_PROGRESS_HARD_TURNS = 30  # LLM 응답 없이 태스크 종료(exit 사유 no_progress)
 
@@ -335,7 +328,6 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         self._center_context = center_context.strip()
         self._services = reference.services
         self._advisors = reference.advisors
-        self._service_reservation_setting = reference.service_reservation_setting
         self._advisors_by_id = {advisor["id"]: advisor for advisor in self._advisors}
         self._select_operator = is_operator_selection_enabled(call_session_data)
         self._prompt_lang, self._default_language = _prompt_language(call_session_data)
@@ -440,10 +432,9 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
     def _no_progress_instruction(self) -> str:
         """SOFT 구간 주입 지시문 — 행동 지시만 담고 상황 설명은 담지 않는다.
 
-        초기 버전은 "통화 상태가 나쁠 수 있다"는 배경 설명과 종료 예고를 매 턴
-        지시했는데, 실통화 테스트(2026-08-31)에서 LLM 이 그 배경 설명을
-        "통화가 잘 안 들리시면 다시 말씀해 주세요" 같은 발화로 그대로 읽어
-        정상 진행 중인 고객에게 반복 안내했다. 그래서 통화 품질 언급은
+        "통화 상태가 나쁠 수 있다"는 배경 설명과 종료 예고를 매 턴 지시하면
+        LLM 이 그 배경 설명을 "통화가 잘 안 들리시면 다시 말씀해 주세요" 같은
+        발화로 그대로 읽어 정상 진행 중인 고객에게 반복 안내한다. 그래서 통화 품질 언급은
         금지 항목으로 뒤집고, 종료 예고는 HARD 직전 두 턴에서만 허용한다.
         """
         base = self._prompt_text("no_progress_base", turns=self._no_progress_turns)
@@ -559,10 +550,10 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
     def _partial_search_reminder(self, hints: list[CallerDateHint]) -> str:
         """Say so when the only search of the named day covered a time window.
 
-        Gemma replays (2026-10-16): after "내일 오전" came back empty, "내일은
-        가능한 시간이 언제에요?" was answered by repeating the morning result in
-        4/4 runs instead of searching the whole day. The code knows the last
-        search was partial, so it states that next to the date.
+        Smaller models, after "내일 오전" came back empty, answered "내일은
+        가능한 시간이 언제에요?" by repeating the morning result instead of
+        searching the whole day. The code knows the last search was partial, so
+        it states that next to the date.
         """
         last = self._last_search_conditions or {}
         if len(hints) != 1 or hints[0].status != "ok":
@@ -589,9 +580,9 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         """Ground caller dates before every inference, whatever the input path.
 
         on_user_turn_completed is not enough: text input (console, chat) goes
-        through generate_reply(user_input=...) and skips that hook, which is why
-        the first text-sim replays (2026-10-16) showed no note at all. llm_node
-        runs for every generation of this task.
+        through generate_reply(user_input=...) and skips that hook, so text
+        sessions would get no note at all. llm_node runs for every generation of
+        this task.
         """
         async for chunk in guard_korean_speech(
             self,
@@ -659,7 +650,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         센터별 설정 차이를 에이전트 결함으로 오진하게 된다.
 
         주입 규모(서비스·상담사 수)도 함께 남긴다. LLM 이 볼 수 있는 선택지의
-        크기가 곧 응대 폭이라, 0 이나 1 이면 되묻기 자체가 성립하지 않는다. [D8]
+        크기가 곧 응대 폭이라, 0 이나 1 이면 되묻기 자체가 성립하지 않는다.
         """
         self.session.history.add_message(
             role="developer",
@@ -837,7 +828,6 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         questions = {
             "ko": "신규 예약 신청 자체를 그만 진행할까요?",
             "en": "Would you like to stop this new booking request altogether?",
-            "ja": "今回の新規予約の手続きを取りやめますか?",
         }
         self._cancel_question = questions.get(language, questions["en"])
         self._cancel_boundary_ids = frozenset(
@@ -1316,17 +1306,15 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         service_id: int | None = None,
         operator_id: int | None = None,
     ) -> dict[str, list[int]]:
-        """하루 DATE_TIME 조회 — size=100 완전성 단정 + tripwire. [D4]
+        """하루 DATE_TIME 조회 — size=100 완전성 단정 + tripwire.
 
         조회는 날짜 단위로 한 번만 하고, 서비스·상담사 필터는 로컬에서 적용한다.
         eligible 판정은 이미 normalize_day_rows 가 주입된 상담사 매핑으로 하고
-        있어(예약 케파는 서비스가 아니라 상담사 단위 [D6]) API 의 serviceId·
+        있어(예약 케파는 서비스가 아니라 상담사 단위) API 의 serviceId·
         operatorId 는 응답을 좁히는 역할뿐이었다. 좁히지 않고 받아 두면 그
         날짜의 어떤 (서비스, 상담사) 조합이든 재조회 없이 만들 수 있다 — search 가
-        서비스 없이 조회한 뒤 stage 가 특정 서비스로 물어도 캐시 히트다.
-
-        실통화 07-30_12:16 에서 조회 9건 중 4건이 같은 요청의 반복이었고,
-        08-01 한 날짜만 5회 조회됐다.
+        서비스 없이 조회한 뒤 stage 가 특정 서비스로 물어도 캐시 히트다. 한
+        통화 안에서 같은 날짜를 여러 번 조회하는 일이 흔해 캐시 효과가 크다.
 
         오늘의 지난 시각 제외는 캐시 뒤가 아니라 매 호출마다 적용한다. 캐시에
         첫 조회 시점의 바닥을 물려 두면 통화가 길어질 때 이미 지나간 슬롯을
@@ -1351,7 +1339,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
     def _apply_today_floor(
         date_str: str, slots: dict[str, list[int]]
     ) -> dict[str, list[int]]:
-        """오늘 조회면 now+lead 이전 슬롯을 제외한다. [D10]"""
+        """오늘 조회면 now+lead 이전 슬롯을 제외한다."""
         today = now_kst()
         if date_str != f"{today:%Y-%m-%d}":
             return slots
@@ -1366,7 +1354,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         service_id: int | None = None,
         operator_id: int | None = None,
     ) -> list[str]:
-        """범위 DATE probe — eligible 상담사가 있는 날짜만, 오름차순. [D5]
+        """범위 DATE probe — eligible 상담사가 있는 날짜만, 오름차순.
 
         조회는 범위 단위로 한 번만 하고, 서비스·상담사 필터는 로컬에서 적용한다.
         좁히지 않은 원본 행을 캐시하면 같은 범위의 어떤 (서비스, 상담사) 조합도
@@ -1415,12 +1403,11 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         *,
         schedule_type: Literal["DATE_TIME", "DATE"],
     ) -> list[Any]:
-        """Unfiltered availability rows for a range; a failed lookup raises. [D5]"""
+        """Unfiltered availability rows for a range; a failed lookup raises."""
         response = await get_site_available_schedules(
             self._call_session_data.business_data.site_id,
             start_date,
             end_date,
-            service_reservation_setting=self._service_reservation_setting,
             schedule_type=schedule_type,
             size=SLOT_PAGE_SIZE,
             client_id=self._call_session_data.business_data.client_id,
@@ -1438,7 +1425,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
     def _check_page_complete(
         self, rows: list[Any], kind: Literal["slot", "date"], **where: str
     ) -> None:
-        """Tripwire: a full page may be truncated, so it is never trusted. [D4]"""
+        """Tripwire: a full page may be truncated, so it is never trusted."""
         if len(rows) >= SLOT_PAGE_SIZE:
             logger.bind(
                 event="DYNAMIC_BOOKING_TASK",
@@ -1566,8 +1553,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
 
         `total_slot_count` 는 잘라내기 전 슬롯 수다. earliest_only 가 응답을
         1건으로 줄이면 게이트가 "그 날의 유일한 슬롯" 으로 착각해 stage 를
-        강제했고, 시각만 물어본 고객에게 확인 질문이 나갔다(실통화
-        07-30_12:16). 잘라낸 건수는 확정 강제의 근거가 될 수 없다. 단,
+        강제했고, 시각만 물어본 고객에게 확인 질문이 나갔다. 잘라낸 건수는 확정 강제의 근거가 될 수 없다. 단,
         `offer_earliest` 는 날짜 미지정 예약 신청에 최단 일정을 기본 제안하기로 한
         명시적 경로이므로 그 후보를 stage 하도록 요구한다. `earliest_result` 는
         자동 stage 여부와 별개로 해당 후보가 최단 검색 결과라는 근거를 보존한다.
@@ -1782,8 +1768,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
     # ---------- 인계(handoff) 컨트롤러 ----------
     # 언제 제안할 수 있는지는 코드가 계산해 도구 결과의 handoff_offer로 알리고,
     # 문장과 말하기는 프롬프트가 맡는다. 코드는 동의 없는 인계 금지, 거절 시 예약
-    # 유지, 세션 단위 거절·제안 이력만 소유한다. 근거:
-    # docs/plans/2026-09-29-booking-handoff-final-plan.md (revision v3)
+    # 유지, 세션 단위 거절·제안 이력만 소유한다.
 
     def _handoff_session(self) -> DynamicBookingResumeContext:
         resume = getattr(self._call_session_data, "dynamic_booking_resume", None)
@@ -2407,7 +2392,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
     def _services_of_slots(
         self, slots: dict[str, list[int]]
     ) -> list[dict[str, Any]]:
-        """서비스 미지정 하루 조회의 가능 서비스 집계. [D6]
+        """서비스 미지정 하루 조회의 가능 서비스 집계.
 
         예약 케파는 서비스가 아닌 상담사 단위이므로, 가용 상담사의 모든 담당
         서비스는 해당 상담사의 슬롯에 공통으로 가용하다.
@@ -2418,7 +2403,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         return self._services_of_advisors(list(available_advisor_ids))
 
     def _services_of_advisors(self, advisor_ids: list[int]) -> list[dict[str, Any]]:
-        """가용 상담사 슬롯의 서비스 항목을 주입 순서로 반환한다. [D6]
+        """가용 상담사 슬롯의 서비스 항목을 주입 순서로 반환한다.
 
         도메인 계약: 예약 케파는 상담사 단위이며 서비스별로 분리되지 않는다.
         따라서 상담사가 특정 시각에 가용하면 정적 매핑된 모든 담당 서비스 항목이
@@ -3119,8 +3104,8 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         """일정 조회 결과를 통화 후 분석용 이벤트로 남기고 결과를 그대로 돌려준다.
 
         `count=0` 이 `NO_AVAILABILITY / CENTER_OPS` 귀인의 직접 근거다.
-        이 이벤트가 없으면 예약 퍼널이 '보험 선택 → 블랙박스 → 완료' 가 되어
-        어느 단계에서 깨졌는지 알 수 없다(설계 문서 §6.2 P0-A).
+        이 이벤트가 없으면 예약 퍼널이 '서비스 선택 → 블랙박스 → 완료' 가 되어
+        어느 단계에서 깨졌는지 알 수 없다.
         """
         presentation = result.get("presentation")
         total_available = (
@@ -3294,7 +3279,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
                 return result
             # select_operator=true 는 "상담사를 고객이 고른다" 는 센터 설정이다.
             # search 경로의 gate 는 이미 다중 후보에서 자동 staging 을 막고 있는데
-            # ([D7] 배정이 stage 안에 있어) 여기엔 같은 조건이 없었다. 그래서 LLM 이
+            # (상담사 자동 배정이 stage 안에 있어) 여기엔 같은 조건이 없었다. 그래서 LLM 이
             # 다음 턴에 stage_booking 을 직접 부르면 설정을 우회해 배정이 확정됐다.
             # 두 경로의 정책을 일치시킨다.
             if self._select_operator and operator_id is None and len(advisors) > 1:
@@ -3303,7 +3288,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
                     "requested": spoken_datetime(when, self._spoken_lang),
                     "available_operators": self._advisor_facts(advisors),
                 }
-            assigned = operator_id if operator_id is not None else advisors[0]  # [D7]
+            assigned = operator_id if operator_id is not None else advisors[0]  #
             earliest_offer = self._consume_earliest_offer(
                 service_id=service_id,
                 operator_id=operator_id,
@@ -3371,15 +3356,15 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
             # 배정 근거는 select_operator=true 에서만 싣는다.
             #
             # false 는 "상담사를 먼저 묻지도 제안하지도 않는다" 는 모드다. 이 두
-            # 필드를 주면 LLM 이 곧바로 "어느 선생님으로 하시겠어요?" 를 꺼낸다 —
+            # 필드를 주면 LLM 이 곧바로 "어느 상담사로 하시겠어요?" 를 꺼낸다 —
             # available_operators 없이 operator_assigned 만 줘도 재현됐고,
             # 프롬프트로 금지하는 시도는 세 번 모두 실패했다. 고객에게 줄 수 없는
             # 선택지는 애초에 모델에게 보이지 않게 한다.
             #
             # true 모드에서는 이 값들이 필요하다. 없으면 LLM 이 받은 상담사 이름이
-            # 유일한 선택지인지 [D7] 로 임의 배정된 것인지 구분할 수 없어, 임의
-            # 배정을 "이 시간은 A 선생님만 가능" 처럼 배타적으로 서술하고 고객이
-            # 되물으면 근거 없이 번복한다(통화 40966).
+            # 유일한 선택지인지 자동으로 임의 배정된 것인지 구분할 수 없어, 임의
+            # 배정을 "이 시간은 A 상담사만 가능" 처럼 배타적으로 서술하고 고객이
+            # 되물으면 근거 없이 번복한다.
             if self._select_operator:
                 result["operator_assigned"] = operator_id is None
                 result["available_operators"] = self._advisor_facts(advisors)
@@ -3580,7 +3565,7 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
             if normalized_code == "cancel" and not self._booking_in_progress():
                 # Nothing was chosen or verified (e.g. the caller declined help for
                 # an unbookable request and wants nothing else): stopping needs no
-                # confirmation question (sim create_hard_02 regression).
+                # confirmation question.
                 self._note_progress()
                 self._reset_cancel_confirmation()
                 skip_confirmation = True
@@ -3664,8 +3649,8 @@ class DynamicBookingTask(AgentTask[DynamicBookingResult]):
         )
         # 오프닝 문구는 say() 로 그대로 읽히므로 "2026-10-19"·"11:45" 같은 툴
         # 표기가 아니라 발화형("10월 19일 월요일"·"오전 11시 45분")으로 만든다.
-        # Gemma 재현(2026-10-16): exit_task(time_condition="2026-10-19")를 그대로
-        # 읽어 "2026-10-19 조건으로 요청"이 발화됐다.
+        # 그렇지 않으면 exit_task(time_condition="2026-10-19")가 그대로 읽혀
+        # "2026-10-19 조건으로 요청"처럼 발화된다.
         derived_condition = _spoken_condition_text(time_condition, language)
         if derived_condition is None:
             target_time = _spoken_clock(conditions.get("target_time"), language)

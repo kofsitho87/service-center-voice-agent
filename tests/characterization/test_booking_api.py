@@ -37,7 +37,7 @@ class ApiCase:
 
 def _check_operators(result):
     assert result.data[0].operatorId == 1
-    assert result.data[0].displayName == "Dr. Kim"
+    assert result.data[0].displayName == "Advisor Kim"
 
 
 def _check_operator_times(result):
@@ -75,7 +75,6 @@ _SITE_REQUEST_PARAMS = {
     "site_id": "S1",
     "start_date": "2030-01-01",
     "end_date": "2030-01-31",
-    "service_reservation_setting": "ALLOW_ONLY_NEW",
     "schedule_type": "DATE",
     "size": 10,
     "operator_id": 3,
@@ -87,8 +86,6 @@ _CONFIRMED_ITEM = {
     "reservationDateTime": "2030-01-02 09:00:00",
     "state": "CONFIRMED",
     "reservationRecordId": "R1",
-    "todayModifiable": True,
-    "todayCancellable": True,
 }
 
 CASES = [
@@ -100,7 +97,7 @@ CASES = [
         params={},
         payload={
             "resultMsg": "ok",
-            "contents": [{"operatorId": 1, "displayName": "Dr. Kim"}],
+            "contents": [{"operatorId": 1, "displayName": "Advisor Kim"}],
         },
         check=_check_operators,
         http_error_message="상담사 조회 중 오류가 발생했습니다.",
@@ -109,12 +106,12 @@ CASES = [
     ApiCase(
         name="get_site_operators",
         event="GET_SITE_OPERATORS",
-        call=lambda: booking_api.get_site_operators("S1", "ALLOW_ONLY_NEW"),
+        call=lambda: booking_api.get_site_operators("S1"),
         path="/reservation/S1/operators",
-        params={"serviceReservationSetting": "ALLOW_ONLY_NEW"},
+        params={},
         payload={
             "resultMsg": "ok",
-            "contents": [{"operatorId": 1, "displayName": "Dr. Kim"}],
+            "contents": [{"operatorId": 1, "displayName": "Advisor Kim"}],
         },
         check=_check_operators,
         http_error_message="상담사 조회 중 오류가 발생했습니다.",
@@ -148,7 +145,6 @@ CASES = [
             "S1",
             "2030-01-01",
             "2030-01-31",
-            "ALLOW_ONLY_NEW",
             operator_id=3,
             service_id=4,
         ),
@@ -158,7 +154,6 @@ CASES = [
             "endDate": "2030-01-31",
             "type": "DATE",
             "size": "10",
-            "serviceReservationSetting": "ALLOW_ONLY_NEW",
             "operatorId": "3",
             "serviceId": "4",
         },
@@ -174,9 +169,9 @@ CASES = [
     ApiCase(
         name="get_services",
         event="GET_SERVICES",
-        call=lambda: booking_api.get_services("S1", "ALLOW_ONLY_REVISIT"),
+        call=lambda: booking_api.get_services("S1"),
         path="/reservation/S1/services",
-        params={"serviceReservationSetting": "ALLOW_ONLY_REVISIT"},
+        params={},
         payload={
             "resultMsg": "ok",
             "contents": {
@@ -224,14 +219,14 @@ CASES = [
         event="GET_CONFIRMED_APPOINTMENTS",
         call=lambda: booking_api.get_confirmed_appointments(
             GetConfirmedAppointmentsRequest(
-                site_id="S1", phone="01000000101", customer_no="C1", verification_code="1990-01-01"
+                site_id="S1", phone="01000000101", customer_no="C1", verification_code="123456"
             )
         ),
         path="/record/S1/appointment/confirm",
         params={
             "phoneNumber": "01000000101",
             "customerNumber": "C1",
-            "verificationCode": "1990-01-01",
+            "verificationCode": "123456",
         },
         payload=[_CONFIRMED_ITEM],
         check=_check_confirmed_appointments,
@@ -430,26 +425,6 @@ async def test_site_schedule_failures_keep_request_params(http):
     assert http_error.request_params == _SITE_REQUEST_PARAMS
     assert unexpected.request_params == _SITE_REQUEST_PARAMS
     assert unexpected.elapsed_ms is None
-
-
-@pytest.mark.asyncio
-async def test_client_override_base_url_is_used(http, monkeypatch):
-    # The override map is empty by default, so exercise the override mechanism
-    # with a synthetic entry.
-    monkeypatch.setattr(
-        booking_api,
-        "_CLIENT_BASEURL_OVERRIDES",
-        {9001: "https://override.fake.invalid/ex"},
-    )
-    http.handler = lambda request: httpx.Response(
-        200, json={"resultMsg": None, "contents": {"services": []}}
-    )
-
-    await booking_api.get_services("S1", "ALLOW_ONLY_NEW", client_id=9001)
-
-    assert str(http.requests[0].url).startswith(
-        "https://override.fake.invalid/ex/reservation/S1/services"
-    )
 
 
 @pytest.mark.asyncio

@@ -20,7 +20,7 @@ from data import (
     parse_dtmf_option,
     parse_dtmf_side_actions,
 )
-from external_apis.fastapi_app_api import get_call_context
+from external_apis.context_api import get_call_context
 from external_apis.sms_api import SmsSendResult, normalize_phone_number, send_sms
 from tasks.booking.exit_reasons import (
     VALID_EXIT_REASON_CODES,
@@ -1246,8 +1246,7 @@ class SingleAgent(BaseAgent):
 
         정보 안내에는 전용 tool 이 없다(data.py: info_look_up → None). 주입된
         Center Knowledge로 답하므로 '시작' 을 관측할 지점이 이 라우팅뿐이다.
-        이 이벤트가 없으면 답변에 성공한 통화만 보여 미응답률을 셀 수 없다
-        (설계 문서 §6.2 P0-C).
+        이 이벤트가 없으면 답변에 성공한 통화만 보여 미응답률을 셀 수 없다.
         """
         if dtmf_tool != "info_look_up" and node.id != "info_agent":
             return

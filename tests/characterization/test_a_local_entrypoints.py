@@ -53,7 +53,6 @@ async def test_text_console_wires_agents_data_like_the_server(monkeypatch):
     monkeypatch.setattr(agent_cli_text, "AgentSession", _FakeSession)
     monkeypatch.setattr(agent_cli_text, "build_agent_llm", Mock())
     monkeypatch.setattr(agent_cli_text, "register_session_event_handlers", Mock())
-    monkeypatch.setattr(agent_cli_text, "load_supplement_prompt", AsyncMock())
     ctx = SimpleNamespace(
         room=SimpleNamespace(
             name="room-1",

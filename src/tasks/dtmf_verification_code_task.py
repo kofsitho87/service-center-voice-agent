@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
 from dataclasses import dataclass, replace
 from typing import Callable
 
@@ -29,53 +28,21 @@ from utils.i18n import t
 from utils.korean_speech_guard import KoreanSpeechGuardMixin
 
 
-def _expand_two_digit_year(year_2digit: int) -> int:
-    """YY < 30 -> 20YY, otherwise 19YY."""
-    return 2000 + year_2digit if year_2digit < 30 else 1900 + year_2digit
-
-
 def _is_valid_verification_code(digits: str) -> bool:
-    """Validate 6-digit YYMMDD verification_code string."""
-    if len(digits) != 6 or not digits.isdigit():
-        return False
-    year, month, day, _ = _parse_verification_code(digits)
-    try:
-        datetime.date(year, month, day)
-        return True
-    except ValueError:
-        return False
-
-
-def _parse_verification_code(digits: str) -> tuple[int, int, int, str]:
-    """Parse 6-digit YYMMDD into (full_year, month, day, normalized 'YYYY-MM-DD')."""
-    full_year = _expand_two_digit_year(int(digits[:2]))
-    month = int(digits[2:4])
-    day = int(digits[4:6])
-    normalized = f"{full_year}-{month:02d}-{day:02d}"
-    return full_year, month, day, normalized
+    """Accept any 6-digit numeric demo verification code."""
+    return len(digits) == 6 and digits.isdigit()
 
 
 @dataclass
 class GetDtmfResult:
     user_input: str
-    year: int = 0
-    month: int = 0
-    day: int = 0
-    normalized_date: str = ""
+    verification_code: str = ""
     confirmed: bool = False
 
     @classmethod
     def from_dtmf_inputs(cls, dtmf_inputs: list[DtmfEvent]) -> GetDtmfResult:
         raw = format_dtmf(dtmf_inputs)
-        digits = raw.replace(" ", "")
-        year, month, day, normalized = _parse_verification_code(digits)
-        return cls(
-            user_input=raw,
-            year=year,
-            month=month,
-            day=day,
-            normalized_date=normalized,
-        )
+        return cls(user_input=raw, verification_code=raw.replace(" ", ""))
 
 
 class GetVerificationCodeDtmfTask(KoreanSpeechGuardMixin, AgentTask[GetDtmfResult]):
@@ -315,11 +282,6 @@ class GetVerificationCodeDtmfTask(KoreanSpeechGuardMixin, AgentTask[GetDtmfResul
     def dtmf_reply_running(self) -> bool:
         return self._dtmf_reply_running
 
-    @property
-    def user_presence_mode(self) -> str:
-        """확인번호 키패드 수집과 음성 확인 중 현재 입력 단계를 반환한다."""
-        return "voice" if self._confirming else "dtmf"
-
     async def _start_confirmation(self, result: GetDtmfResult) -> None:
         """DTMF 수집 완료 후 같은 Task 안에서 음성 확인 단계로 전환한다."""
         if self._confirming or self._exited or self._completed or self.done():
@@ -356,7 +318,7 @@ class GetVerificationCodeDtmfTask(KoreanSpeechGuardMixin, AgentTask[GetDtmfResul
             extra=agent_event_extra(
                 "VERIFICATION_CODE_DTMF_TASK",
                 status="CONFIRM",
-                details={"date": result.normalized_date},
+                details={"verification_code": result.verification_code},
             ),
         )
 

@@ -152,20 +152,18 @@ def test_parser_removes_console_log_suffix_and_status_marker(tmp_path):
     ]
 
 
-def test_quality_transcript_excludes_harness_closing_and_duplicates(tmp_path):
+def test_quality_transcript_excludes_duplicates(tmp_path):
     parsed = parsed_from(
         [
             customer("없어요"),
             agent("통화를 종료하겠습니다."),
             agent("통화를 종료하겠습니다. ✓"),
-            agent("응답지연으로 인해 통화를 종료합니다."),
             END,
         ],
         tmp_path,
     )
     quality = parsed.quality_transcript_text()
     assert quality.count("통화를 종료하겠습니다") == 1
-    assert "응답지연" not in quality
 
 
 # ------------------------------------------------------------------ outcome
@@ -584,7 +582,6 @@ defaults:
   judge_model: "openai:gpt-5.4-mini"
   concurrency: 2
   timeout_sec: 300
-  away_timeout: 60
   stop_on_transfer: true
   agent_regex_none: ["\\\\*\\\\*"]
 fixtures:
@@ -604,7 +601,7 @@ SCENARIO_BASE = {
     "phase": 1,
     "persona": {
         "name": "가상 고객",
-        "verification_code": "1987-09-04",
+        "verification_code": "000101",
         "age_gender": "38세 남성",
         "personality": "정중함",
         "goal": "영업시간 문의",
@@ -1008,7 +1005,6 @@ def test_timeout_after_expected_business_outcome_is_harness_warning(
             customer("예약할게요"),
             tool("commit_booking"),
             agent("예약 신청이 접수되었습니다."),
-            agent("응답지연으로 인해 통화를 종료합니다."),
         ],
         tmp_path,
     )
@@ -1051,7 +1047,6 @@ def test_judge_prompt_uses_sanitized_quality_transcript(fake_repo, tmp_path):
             customer("없어요"),
             agent("통화를 종료하겠습니다."),
             agent("통화를 종료하겠습니다. ✓"),
-            agent("응답지연으로 인해 통화를 종료합니다."),
             tool("end_call_by_system"),
             END,
         ],
@@ -1059,7 +1054,6 @@ def test_judge_prompt_uses_sanitized_quality_transcript(fake_repo, tmp_path):
     )
     prompt = build_judge_prompt(scenario, parsed)
     assert prompt.count("에이전트: 통화를 종료하겠습니다.") == 1
-    assert "응답지연" not in prompt
     assert "루브릭에 없는 새로운 금지 조건" in JUDGE_SYSTEM_PROMPT
 
 
@@ -1070,15 +1064,6 @@ def test_session_looks_finished_on_session_end(tmp_path):
     from sim_suite.events import session_looks_finished
 
     parsed = parsed_from([agent("안녕히 계세요"), END], tmp_path)
-    assert session_looks_finished(parsed) is True
-
-
-def test_session_looks_finished_on_response_delay_close(tmp_path):
-    from sim_suite.events import session_looks_finished
-
-    parsed = parsed_from(
-        [customer("..."), agent("응답지연으로 인해 통화를 종료합니다.")], tmp_path
-    )
     assert session_looks_finished(parsed) is True
 
 
@@ -1115,7 +1100,7 @@ def test_should_stop_early_requires_grace_period(tmp_path):
     from sim_suite.events import should_stop_early
 
     parsed = parsed_from(
-        [customer("..."), agent("응답지연으로 인해 통화를 종료합니다.")], tmp_path
+        [customer("..."), agent("통화를 종료하겠습니다.")], tmp_path
     )
     assert should_stop_early(parsed, idle_sec=5.0) is False
     assert should_stop_early(parsed, idle_sec=19.9) is False
@@ -1179,18 +1164,6 @@ def test_should_retry_on_no_outcome():
     assert should_retry(make_result(verdict="FAIL", outcome="no_outcome")) is True
 
 
-def test_should_retry_on_away_timeout_closing():
-    from sim_suite.runner import should_retry
-
-    result = make_result(
-        verdict="FAIL",
-        outcome="ended_by_agent",
-        stopped_early=True,
-        last_agent_msgs=["네 확인했습니다", "응답지연으로 인해 통화를 종료합니다."],
-    )
-    assert should_retry(result) is True
-
-
 def test_should_not_retry_a_clean_pass():
     from sim_suite.runner import should_retry
 
@@ -1204,21 +1177,6 @@ def test_should_not_retry_a_real_failure():
         verdict="FAIL",
         outcome="memo_left",
         last_agent_msgs=["메모를 남겨드렸습니다", "감사합니다"],
-    )
-    assert should_retry(result) is False
-
-
-def test_should_not_retry_when_closing_is_not_the_last_line():
-    """마지막 발화가 아니면 스톨의 최종 증상이 아니다."""
-    from sim_suite.runner import should_retry
-
-    result = make_result(
-        verdict="JUDGE_FAIL",
-        outcome="booking_created",
-        last_agent_msgs=[
-            "응답지연으로 인해 통화를 종료합니다.",
-            "예약이 완료되었습니다",
-        ],
     )
     assert should_retry(result) is False
 
@@ -1250,7 +1208,7 @@ def test_is_flaky_transitions():
 PS_LINE = (
     "84213 /opt/app/.venv/bin/python src/agent-cli-text.py console --text "
     "PATH=/usr/bin SHELL=/bin/zsh DIAL_INFO_JSON=/tmp/a.yaml "
-    "SIM_SUITE_RUN_TAG={tag} USER_AWAY_TIMEOUT=90"
+    "SIM_SUITE_RUN_TAG={tag}"
 )
 
 

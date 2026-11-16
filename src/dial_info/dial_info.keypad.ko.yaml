@@ -21,7 +21,6 @@ business_data:
 recipient_data:
   phone: "01000000002"
   caller_phone: "01000000002"
-  customer_visit: REVISIT
 
 flow_config:
   entry_node_id: greeting_menu
@@ -85,13 +84,6 @@ agents_config:
     booking_modify: auto
     booking_cancel: auto
     booking_inquiry: auto
-  info_agent:
-    introduction: auto
-    visit_guide: auto
-    advisor_guide: auto
-    service_guide: auto
-    certificate: auto
-    events: auto
 
 workflow_config:
   booking:
@@ -101,10 +93,6 @@ workflow_config:
         display_mode: parent_with_child
         free_utterance: true
       verify_single_customer_identity: true
-    booking_modify:
-      allow_same_day_reservation: false
-    booking_cancel:
-      allow_same_day_reservation: true
   leave_message:
     booking_contact_collection: desired_datetime_and_message
 

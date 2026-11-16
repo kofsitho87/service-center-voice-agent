@@ -1,8 +1,8 @@
 """Code-owned date grounding for the booking task.
 
-Gemma searched 10-20 or 10-26 for "다음주 월요일"(10-19) in 10/10 replays
-(2026-10-16) while GPT-5.6-luna was right 10/10. The fix moves date resolution
-out of the model: the caller's own phrase is paired with its date right after
+Smaller models searched the wrong day for "다음주 월요일" when they had to
+compute dates from a calendar themselves. Date resolution therefore lives
+outside the model: the caller's own phrase is paired with its date right after
 the utterance, the turn's first one-day search is corrected to that date, and
 every returned date carries the words to speak.
 """
@@ -293,9 +293,9 @@ class TestSearchCorrection:
 class TestPartialSearchReminder:
     @pytest.mark.asyncio
     async def test_note_says_the_named_day_was_only_searched_for_a_window(self):
-        # Gemma replays (2026-10-16): after an empty "내일 오전" search, "내일은
-        # 가능한 시간이 언제에요?" was answered from the morning result in 10/10
-        # runs instead of searching the whole day.
+        # After an empty "내일 오전" search, models tend to answer "내일은
+        # 가능한 시간이 언제에요?" from the morning result instead of searching
+        # the whole day.
         task = _task()
         task._last_search_conditions = {
             "start_date": "2026-10-17",
@@ -334,8 +334,8 @@ class TestPartialSearchReminder:
 
 
 class TestSpokenConditionText:
-    # Gemma replays (2026-10-16): exit_task(time_condition="2026-10-19") was read
-    # aloud as "2026-10-19 조건으로 요청", tripping the suite's ISO-date ban.
+    # exit_task(time_condition="2026-10-19") must not be read aloud as
+    # "2026-10-19 조건으로 요청"; the suite bans spoken ISO dates.
     @pytest.mark.parametrize(
         ("text", "language", "expected"),
         [

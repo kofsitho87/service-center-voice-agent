@@ -1,6 +1,5 @@
 """warm_transfer_no_briefing: config, dispatch, warm handler and monitor.
 
-Plan: docs/plans/2026-09-29-warm-transfer-no-briefing-plan.md (Sections 1-3, 5).
 SingleRoomWarmTransferTask is always replaced by a fake so these tests only
 cover what BaseAgent passes to it and how it handles the result.
 """
@@ -44,7 +43,7 @@ def warnings_sink():
     logger.remove(sink_id)
 
 
-# --- Section 1: config value and validation ---------------------------------
+# --- config value and validation -------------------------------------------
 
 
 @pytest.mark.parametrize("mode", TRANSFER_MODES)
@@ -98,7 +97,7 @@ def test_from_dial_info_defaults_missing_and_unknown_modes(warnings_sink):
     assert [r["extra"]["event"] for r in warnings_sink] == ["TRANSFER_MODE_UNKNOWN"]
 
 
-# --- Section 2: dispatch ----------------------------------------------------
+# --- dispatch --------------------------------------------------------------
 
 
 def _dispatch_agent(monkeypatch):
@@ -198,7 +197,7 @@ async def test_unknown_mode_dispatches_as_briefed_warm_transfer(
     assert [r["extra"]["event"] for r in warnings_sink] == ["TRANSFER_MODE_UNKNOWN"]
 
 
-# --- Section 3: warm handler (fakeredis queue, fake single-room task) --------
+# --- warm handler (fakeredis queue, fake single-room task) -----------------
 
 
 class _FakeRoom:
@@ -289,7 +288,6 @@ async def handler_env(monkeypatch):
             user_name=None,
             verification_code=None,
             customer_no=None,
-            customer_visit="NEW",
         ),
         room_name=room.name,
         call_config_data=SimpleNamespace(
@@ -709,7 +707,7 @@ async def test_caller_leaving_during_normal_dial_dequeues_after_task(
     assert _failed_status(env) == "caller_disconnected"
 
 
-# --- Section 3: monitor presence re-check -----------------------------------
+# --- monitor presence re-check ---------------------------------------------
 
 
 def _monitor_env(monkeypatch, present: set[str]):

@@ -325,15 +325,15 @@ class VerifyCustomerIdentityTask:
                     stage="verification_code_collected",
                     room_name=userdata.room_name,
                     phone=userdata.recipient_data.phone,
-                    verification_code=verification_code_result.normalized_date,
+                    verification_code=verification_code_result.verification_code,
                     confirmed=verification_code_result.confirmed,
                 ).debug("VerificationCode collected")
 
-                if not verification_code_result.normalized_date:
+                if not verification_code_result.verification_code:
                     return None
 
                 if verification_code_result.confirmed:
-                    return verification_code_result.normalized_date
+                    return verification_code_result.verification_code
 
             except Exception as e:
                 logger.bind(
@@ -352,7 +352,7 @@ class VerifyCustomerIdentityTask:
         matches: list[CustomerItem] = []
         for customer in customers:
             try:
-                normalized = normalize_verification_code(customer.verification_code, separator="-")
+                normalized = normalize_verification_code(customer.verification_code)
                 if normalized == input_verification_code:
                     matches.append(customer)
             except ValueError:

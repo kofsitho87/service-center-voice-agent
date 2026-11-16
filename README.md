@@ -41,16 +41,18 @@ flowchart TD
 
     subgraph TASKS["태스크 (여러 턴 대화)"]
         K1["DynamicBookingTask<br/>search → stage → commit"]
-        K2["SelectReservation<br/>OperatorScheduleSelection"]
-        K3["WarmTransfer · LeaveMessage<br/>GreetingDtmf · VerifyIdentity"]
+        K2["SelectReservationTask<br/>변경·취소할 예약 고르기"]
+        K2b["OperatorScheduleSelectionTask<br/>변경할 새 시간 고르기"]
+        K3["WarmTransfer · LeaveMessage<br/>직원 연결 · 메모 남기기"]
+        K4["VerifyCustomerIdentity<br/>본인 확인"]
     end
 
     T1 --> K1
-    T2 --> K2
+    T2 --> K4 --> K2 --> K2b
     T3 --> K3
 
     T1 & T2 --> SUBMIT["reservation_submit<br/>완료 직전 저장"]
-    K1 & K2 & SUBMIT --> CLIENTS["API 클라이언트<br/>booking · sms · context · trunk"]
+    K1 & K2b & SUBMIT --> CLIENTS["API 클라이언트<br/>booking · sms · context · trunk"]
     CLIENTS --> HTTP["http_client"]
     HTTP --> FAKE["FakeBackendTransport<br/>*.fake.invalid 외 차단"]
 
@@ -165,7 +167,7 @@ sequenceDiagram
 - **실제 음성 런타임:** LiveKit Agents 1.8.6 기반입니다. STT, LLM, TTS, VAD,
   턴 감지를 쓰고, DTMF 키패드 메뉴와 상담원 연결 대기열을 지원합니다. 전화
   연결 자체는 시뮬레이션입니다.
-- **검증 근거:** 오프라인 테스트가 1800개 이상입니다(S01–S21 시나리오 포함).
+- **검증 근거:** 오프라인 테스트가 약 1800개입니다(S01–S21 시나리오 포함).
   LLM이 고객을 연기하는 라이브 테스트 세트와 통화 후 로컬 분석 단계도 있습니다.
 
 ## 요구 사항
@@ -197,7 +199,7 @@ cp .env.example .env   # 필요한 키만 채워 넣으세요
 | 라이브 회귀 테스트 세트 | `uv run python tools/sim-suite.py` (시나리오 5개, LLM 채점) |
 | 라이브 음성 (마이크) | `uv run python src/agent-cli.py console` |
 | 통화 후 분석 | `uv run python conversation_analysis/main.py --show` |
-| 린트 | `uv run ruff check src tools tests conversation_analysis` (보고 35건. 대부분 API 필드의 `mixedCase` 이름입니다) |
+| 린트 | `uv run ruff check src tools tests conversation_analysis` (보고 39건. 대부분 API 필드의 `mixedCase` 이름입니다) |
 
 5분짜리 시연 순서는 `docs/demo-script.md`에 있습니다.
 
@@ -235,7 +237,7 @@ docs/                   아키텍처, 평가, 시연 순서
     Git이 추적하는 파일만 복사하고, 내부 문서는 제외하며, 민감정보 검사를
     거칩니다.
   - `.env` 없이 `uv sync --locked`로 설치하고 `uv run pytest tests`를 실행해
-    1807개가 통과했습니다. 그 밖에 알려진 실패 1건이 예상된 실패(xfail)로
+    1796개가 통과했습니다. 그 밖에 알려진 실패 1건이 예상된 실패(xfail)로
     표시됩니다.
 - 라이브 검증은 작업용 저장소에서 실행했습니다(`docs/evaluation.md`).
 
@@ -252,9 +254,8 @@ docs/                   아키텍처, 평가, 시연 순서
 - **실제로 연결된 시스템은 없습니다.** 실제 예약, 문자, 전화, 직원 연결은
   일어나지 않습니다. 상담원 연결이 성공하는 경우도 시뮬레이션하지 않아서,
   직원 연결은 항상 대체 경로(재시도 후 메모 남기기)로 진행됩니다.
-- **본인 확인은 발신 번호와 데모 확인번호뿐입니다.** 실제 신원 확인이나 다른
-  기기에서의 조회는 지원하지 않습니다. 확인번호 검증기가 YYMMDD 형식을
-  검사하기 때문에 데모 확인번호도 날짜 형태입니다.
+- **본인 확인은 발신 번호와 데모 확인번호(숫자 6자리)뿐입니다.** 실제 신원
+  확인이나 다른 기기에서의 조회는 지원하지 않습니다.
 - **최신 동의 검사는 구조적 검사입니다.** 제안 바로 다음 고객 발화가 정말
   "네"인지는 코드가 판단할 수 없고, 그 판단은 여전히 모델의 몫입니다.
 - **오프라인 테스트는 모델의 턴을 스크립트로 대신합니다.** 그래서 검증하는

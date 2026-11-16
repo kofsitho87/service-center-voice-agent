@@ -139,11 +139,11 @@ async def _collect_new_customer_verification_code(ctx: RunContext_T) -> None:
             num_digits=6,
         )
 
-        if not verification_code_result.normalized_date:
+        if not verification_code_result.verification_code:
             continue
 
         if verification_code_result.confirmed:
-            userdata.recipient_data.verification_code = verification_code_result.normalized_date
+            userdata.recipient_data.verification_code = verification_code_result.verification_code
             ctx.session.history.add_message(
                 role="developer",
                 content="",

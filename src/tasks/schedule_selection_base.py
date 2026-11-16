@@ -443,7 +443,7 @@ class BaseScheduleSelectionTask(
         tools: list[llm.Tool],
         model_settings: ModelSettings,
     ) -> AsyncIterable[llm.ChatChunk | str | FlushSentinel]:
-        # Text input skips on_user_turn_completed (Gemma sims, 2026-10-29).
+        # Text input skips on_user_turn_completed, so ground dates here too.
         async for chunk in super().llm_node(
             self._with_caller_date_note(chat_ctx), tools, model_settings
         ):
@@ -923,7 +923,7 @@ class BaseScheduleSelectionTask(
                 next_action="ask_date",
                 date=resolved,
                 # Hand the LLM the ground-truth weekday so it never fills a
-                # confirmation like "혹시 X요일을 말씀하신 걸까요?" itself (call 24596).
+                # confirmation like "혹시 X요일을 말씀하신 걸까요?" itself.
                 day_name=_day_name(
                     datetime.strptime(resolved, "%Y-%m-%d").weekday(), lang
                 ),
@@ -1525,7 +1525,7 @@ class BaseScheduleSelectionTask(
 
         if is_available:
             # Remember the one time just confirmed as open, so a bare "네" that
-            # reaches confirm_pick re-stages it instead of dead-ending (call 183745).
+            # reaches confirm_pick re-stages it instead of dead-ending.
             raw, advisor_id = self._find_slot_for(resolved_date, hhmm)
             if raw and advisor_id is not None:
                 self._last_offered_slots = [raw]
@@ -1561,7 +1561,7 @@ class BaseScheduleSelectionTask(
         """Counter + loop-break for repeated UNCLEAR date/time utterances.
 
         STT mis-recognitions made the model emit the same "다시 말씀해
-        주세요" re-request turn after turn (call 19027). After the first
+        주세요" re-request turn after turn. After the first
         retry, if a date with known slots is already in context, stop
         repeating the request and read that date's times so the user can
         just pick one — the escalation the STT prompt section describes.

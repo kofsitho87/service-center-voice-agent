@@ -36,7 +36,6 @@ END_CALL_TOOLS = ("end_call_by_system", "end_call_by_user_request")
 # 에이전트가 통화를 끝내겠다고 말한 뒤에도 콘솔 프로세스가 종료되지 않는
 # 경우가 있다. 이 문구가 마지막 이벤트면 대화는 사실상 끝난 것으로 본다.
 SESSION_CLOSING_MARKERS = (
-    "응답지연으로 인해 통화를 종료합니다",
     "통화를 종료하겠습니다",
 )
 IDLE_GRACE_SEC = 20.0
@@ -101,13 +100,11 @@ class ParsedEvents:
         return "\n".join(f"{role}: {content}" for role, content in self.transcript)
 
     def quality_transcript_text(self) -> str:
-        """Return spoken dialogue only, excluding harness closures and duplicates."""
+        """Return spoken dialogue only, excluding empty messages and duplicates."""
         cleaned: list[tuple[str, str]] = []
         for role, content in self.transcript:
             content = clean_agent_message(content)
             if not content:
-                continue
-            if role == AGENT_ROLE and content == "응답지연으로 인해 통화를 종료합니다.":
                 continue
             if cleaned:
                 previous_role, previous_content = cleaned[-1]

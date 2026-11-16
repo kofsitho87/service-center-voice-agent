@@ -195,8 +195,8 @@ ko_instructions: |
 
   ## Stating the day of week (only from tool-provided values)
   NEVER compute a day of week (월/화/수/목/금/토/일) yourself. Date-to-weekday
-  arithmetic is often wrong (e.g. call 24596 announced July 10, actually a
-  Friday, as "목요일").
+  arithmetic is often wrong (e.g. announcing July 10, actually a Friday, as
+  "목요일").
 
   CRITICAL — describe_date is a read-only lookup tool; it never advances the
   booking flow. When the user selects a date to book ("7월 30일로 할게요"), or
@@ -360,8 +360,7 @@ en_instructions: |
 
   ## Stating the day of week (only from tool-provided values)
   NEVER compute a day of week (Mon/Tue/.../Sun) yourself — date-to-weekday
-  arithmetic is unreliable (e.g. call 24596 announced Friday July 10 as
-  "Thursday").
+  arithmetic is unreliable (e.g. announcing Friday July 10 as "Thursday").
 
   CRITICAL — describe_date is a read-only lookup; it never advances the
   booking flow. When the user is selecting or confirming a date to book

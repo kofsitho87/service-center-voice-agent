@@ -47,6 +47,6 @@ per call: resolution, tools used, booking events, reservation ID, and duration.
 ## Offline proof (no credentials)
 
 ```bash
-uv run pytest tests            # 1800+ tests, about 25 s
+uv run pytest tests            # about 1800 tests, about 25 s
 uv run pytest tests/scenarios  # S01-S21 only
 ```

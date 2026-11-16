@@ -192,7 +192,7 @@ class DynamicBookingResult:
 
 
 class BookingApiError(RuntimeError):
-    """조회 하위 호출 실패 — 부분 결과 없이 전체 오류로 승격한다. [D5]"""
+    """조회 하위 호출 실패 — 부분 결과 없이 전체 오류로 승격한다."""
 
 
 # 종료 멘트는 태스크가 아니라 호출자(셸/툴)가 발화한다.

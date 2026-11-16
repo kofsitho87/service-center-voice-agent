@@ -1,10 +1,8 @@
 """무진행(no-progress) 가드 — 코드 소유 카운터와 개입 경계 검증.
 
-실통화 2026-08-28(42분·336턴): 사용자 발화가 저신뢰 추임새("네", "어")와
-예약과 무관한 제3자 대화 조각뿐이라 booking 툴이 한 번도 호출되지 않았는데,
-프롬프트 규칙(반복 금지·되묻기)도 exit_task 도 끝내 발동하지 않았다. 무음
-워치독(USER_RESPONSE_DELAY)은 저신뢰 발화가 타이머를 계속 리셋해 42분 뒤에야
-동작했다.
+사용자 발화가 저신뢰 추임새("네", "어")와 예약과 무관한 주변 대화 조각뿐이면
+booking 툴이 한 번도 호출되지 않은 채 통화가 끝없이 이어질 수 있다. 프롬프트
+규칙(반복 금지·되묻기)이나 exit_task 는 이 상황에서 발동이 보장되지 않는다.
 
 가드는 판단을 LLM 에 맡기지 않는다 — 연속 무진행 턴 수는 코드가 세는 사실이다.
 - 사용자 턴마다 +1, booking 툴 호출(조회·스테이징·커밋 시도)마다 0으로 리셋.
@@ -71,9 +69,9 @@ class TestSoftIntervention:
         assert injected.role == "system"
         assert "Do not re-ask" in injected.content
         assert "yes or no" in injected.content
-        # 실통화 2026-08-31 회귀 고정: 지시문의 배경 설명("통화 상태가 나쁠 수
-        # 있다")과 매 턴 종료 예고를 LLM 이 "통화가 잘 안 들리시면 다시 말씀해
-        # 주세요"처럼 고객 발화로 그대로 읽었다. SOFT 구간 지시문은 통화 품질
+        # 회귀 고정: 지시문의 배경 설명("통화 상태가 나쁠 수 있다")과 매 턴
+        # 종료 예고를 주면 LLM 이 "통화가 잘 안 들리시면 다시 말씀해 주세요"처럼
+        # 고객 발화로 그대로 읽는다. SOFT 구간 지시문은 통화 품질
         # 언급 금지를 담고, 종료 예고는 담지 않는다.
         assert "call quality" in injected.content
         assert "may be ended" not in injected.content
@@ -99,8 +97,8 @@ class TestSoftIntervention:
 
 class TestThresholds:
     def test_thresholds_match_product_decision(self):
-        # 실통화 테스트(2026-08-31): 정상 날짜 협의도 달력 블록 문답으로 툴
-        # 없이 10턴을 채워 5/10 이 오탐 종료를 냈다. 사용자 결정으로 20/30.
+        # 정상 날짜 협의도 달력 블록 문답으로 툴 없이 10턴을 채울 수 있어 5/10 은
+        # 오탐 종료를 낸다. 그래서 20/30 이다.
         assert NO_PROGRESS_SOFT_TURNS == 20
         assert NO_PROGRESS_HARD_TURNS == 30
 
